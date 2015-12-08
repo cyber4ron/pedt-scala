@@ -25,7 +25,7 @@ object JsonSpec extends App {
   engine.eval("function printAny2(x){ print(x); };")
 
   val invocable = engine.asInstanceOf[Invocable]
-  invocable.invokeFunction("printAny2", xx.get) // {arg1={arg1=str, arg2=1, arg3=true}, arg2=[x, 10], arg3=true}. ok.
+  invocable.invokeFunction("printAny2", xx.getArg) // {arg1={arg1=str, arg2=1, arg3=true}, arg2=[x, 10], arg3=true}. ok.
 
   Thread.sleep(1000)
 }

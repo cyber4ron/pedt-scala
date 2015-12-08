@@ -1,13 +1,9 @@
 package n4c.pedt.core
 
-import Method.Executable
-import Scope.Resources
-import n4c.pedt.context.HttpContext
+import n4c.pedt.core.Method.Executable
+import n4c.pedt.core.Scope.Resources
 import n4c.pedt.util.{Conversions, ScopeProxy}
-import n4c.util.Conversions
 import spray.json._
-
-import scala.collection.immutable.Iterable
 
 object Scope {
   type Resources = Seq[String]
@@ -30,36 +26,28 @@ class Scope(val system: String,
 }
 
 object Arguments {
-  private[n4c] def apply(argsJson: JsValue) = {
-    import scala.collection.JavaConversions._
-    new Arguments(argsJson.asJsObject.fields.map(kv => kv._1 -> Conversions.jsValueToJava(kv._2)))
+  private[n4c] def apply(args: JsValue) = {
+    new Arguments(args.asJsObject.fields)
   }
 
-  private[n4c] def apply(args: Iterable[(String, JsValue)]) = {
-    import scala.collection.JavaConversions._
-    new Arguments(args.map { kv =>
-      kv._1 -> Conversions.jsValueToJava(kv._2)
-    }.toMap[String, Object])
-  }
+  def mix(self: Option[Arguments], other: Map[String, JsValue]): Option[Arguments] = {
+    var mixed = Map.empty[String, JsValue]
+    if(self.isDefined) { self.get.scalaArgs.foreach(kv => mixed = mixed.updated(kv._1, kv._2)) }
+    for ((k, v) <- other) mixed = mixed.updated(k, v)
 
-  def mix(self: Option[Arguments], other: Map[String, JsValue]): Option[Arguments] = { // 会覆盖??
-    var mixed = Map.empty[String, Object]
-
-    import collection.JavaConversions._
-    self.foreach { args => for ((k, v) <- args.get) mixed = mixed.updated(k, v) }
-    for ((k, v) <- other) mixed = mixed.updated(k, Conversions.jsValueToJava(v))
-
-    if (mixed.nonEmpty) Some(new Arguments(mapAsJavaMap(mixed))) else None
+    if (mixed.nonEmpty) Some(new Arguments(mixed)) else None
   }
 }
 
-class Arguments(private val arguments: java.util.Map[String, Object]) {
-  def get: java.util.Map[String, Object] = arguments
-  def getArgumentArray: Array[Object] = arguments.values().toArray
+class Arguments(private[n4c] val scalaArgs: Map[String, JsValue]) {
+  import scala.collection.JavaConversions._
+  val javaArgs: java.util.Map[String, Object] = scalaArgs.map(kv => kv._1 -> Conversions.jsValueToJava(kv._2))
+  def getArg: java.util.Map[String, Object] = javaArgs
+  def getArgArray: Array[Object] = javaArgs.values().toArray
 }
 
 object Method {
-  type Executable = { def execute(x: Object*): Any } // call by reflection
+  type Executable = { def execute(x: Object*): Option[AnyRef] } // call by reflection
   def apply(methodDef: JsObject) = new Method(methodDef)
 }
 
@@ -80,26 +68,21 @@ class Method(methodDef: JsObject) {
     case _ => throw new IllegalArgumentException
   }
 
-  def execute(args: Map[String, JsValue]): Any = {
-    import HttpContext._
-
-    log.info(arguments + s", in method.execute, args: $args")
+  def execute(args: Map[String, JsValue]): Option[AnyRef] = {
     arguments = Arguments.mix(arguments, args)
-    log.info(arguments + s", in method.execute")
-    arguments.foreach(x => println(s"arguments: ${x.get}"))
 
     distrType match {
       case "run" => executable match {
-        case _: Data | _: Script => executable.execute(arguments.map(_.getArgumentArray).getOrElse(Array.empty[Object]): _*)
-        case _: Task             => executable.execute(arguments.map(_.getArgumentArray).getOrElse(Array.empty[Object]))
+        case executable @ (_: Data | _: Script) => executable.execute(arguments.map(_.getArgArray).getOrElse(Array.empty[Object]): _*)
+        case task: Task             => task.execute(arguments.map(_.getArgArray).getOrElse(Array.empty[Object]))
         case _                   => throw new IllegalStateException
       }
       case "map" =>
         if (scope.isEmpty) throw new IllegalStateException("")
         executable match {
-          case t: Task => scope.get.getResources map { res =>
-            if (t.taskId.isDefined) requestBlocking(s"$res/execute_task:${t.taskId.get}")
-          }
+          case task: Task =>
+            if (scope.isEmpty) throw new IllegalStateException("")
+            Some(PEDT.map(scope.get, task.taskId.get, arguments.get.scalaArgs))
           case _ => throw new IllegalStateException("")
         }
       case _ => throw new IllegalStateException

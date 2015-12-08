@@ -2,17 +2,13 @@ package n4c.pedt.util
 
 import java.net.URLEncoder
 
-import n4c.pedt.context.HttpContext
+import com.typesafe.config.ConfigFactory
+import n4c.pedt.context.HttpContext._
 import n4c.pedt.core.{Scope, Task}
 import org.slf4j.LoggerFactory
-
-import scala.util.Properties.envOrElse
-
-import com.typesafe.config.ConfigFactory
 import spray.json._
 
-import HttpContext._
-import n4c.core.Task
+import scala.util.Properties.envOrElse
 
 /**
  * should be thread safe
@@ -40,6 +36,7 @@ object ScopeProxy extends Proxy[Scope, Scope]({
   val config = ConfigFactory.load()
   envOrElse("resource.scope", config.getString("resource.scope"))
 }) {
+  private val log = LoggerFactory.getLogger(ScopeProxy.getClass)
   override def apply(a: Scope): Option[Scope] = Some(a)
 
   override def retrieve(scope: String): Option[Scope] = {
@@ -62,7 +59,7 @@ object TaskProxy extends Proxy[Task, JsValue]({
   val config = ConfigFactory.load()
   envOrElse("resource.task", config.getString("resource.task"))
 }) {
-  val log = LoggerFactory.getLogger(TaskProxy.getClass)
+  private val log = LoggerFactory.getLogger(TaskProxy.getClass)
   override def apply(taskDef: JsValue): Option[Task] = {
     try {
       Some(Task(taskDef.asJsObject))

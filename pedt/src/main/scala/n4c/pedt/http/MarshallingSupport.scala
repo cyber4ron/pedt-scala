@@ -6,7 +6,6 @@ import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.ActorMaterializer
 import n4c.pedt.util.Conversions
-import Conversions
 import spray.json._
 
 object MarshallingSupport {
@@ -14,7 +13,7 @@ object MarshallingSupport {
   implicit val materializer = ActorMaterializer()
 
   // marshall
-  implicit def sprayJsValueMarshaller(implicit printer: AnyRef => String = Conversions.nashornToString): ToResponseMarshaller[AnyRef] = // 改名字sprayJsValueMarshaller
+  implicit def AnyRefMarshaller(implicit printer: Option[AnyRef] => String = Conversions.nashornToString): ToResponseMarshaller[Option[AnyRef]] =
     Marshaller.StringMarshaller.wrap(ContentTypes.`application/json`)(printer)
 
   // unmarshal
@@ -25,10 +24,8 @@ object MarshallingSupport {
 
   implicit val jsValueUmMarshaller: Unmarshaller[HttpEntity, JsValue] =
     Unmarshaller.byteStringUnmarshaller.mapWithCharset { (data, charset) =>
-      println(new String(data.toArray, charset.value))
       try {
-        val x = new String(data.toArray, charset.value)
-        new String(data.toArray, charset.value).parseJson // 还有简单写法吗
+        new String(data.toArray, charset.value).parseJson
       } catch {
         case _: Throwable => JsString(new String(data.toArray, charset.value))
       }

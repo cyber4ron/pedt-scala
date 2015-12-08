@@ -3,12 +3,11 @@ package n4c.pedt.core
 import java.util.Base64
 import n4c.pedt.context.JSContext
 import n4c.pedt.util.TaskProxy
-import TaskProxy
 import org.slf4j.LoggerFactory
 import spray.json.{ JsString, JsValue }
 
 trait JSExecutable {
-  def execute(args: Object*): Any
+  def execute(args: Object*): AnyRef
 }
 
 trait Content extends JSExecutable {
@@ -40,7 +39,7 @@ object Data {
 class Data(override val subtype: String,
            override val encodeType: String,
            override val value: String = "") extends Content {
-  def execute(args: Object*): Any = {
+  def execute(args: Object*): Option[AnyRef] = {
     import JSContext._
     evalJS(value)
   }
@@ -69,19 +68,19 @@ object Script {
 class Script(override val subtype: String,
              override val encodeType: String,
              override val value: String = "") extends Content {
-  val log = LoggerFactory.getLogger(Script.getClass)
-  def execute(args: Object*): AnyRef = {
+  private val log = LoggerFactory.getLogger(Script.getClass)
+  def execute(args: Object*): Option[AnyRef] = {
     log.info(s"in script.execute, args: $args")
+    import JSContext._
     val funcNameCapture = """^[\s]*function\s+([^\s(]+)""".r // 前置换行
     val matches = funcNameCapture.findFirstMatchIn(value)
     if (matches.isDefined) {
       if (matches.get.groupCount == 1) {
         val funcName = matches.get.subgroups.head
-        JSContext.engine.eval(value)
-        JSContext.invocable.invokeFunction(funcName, args: _*) // args must be java objects
+        declareAndInvokeJSFunc(funcName, value, args: _*) // args must be java objects
       } else throw new IllegalStateException
     } else {
-      JSContext.engine.eval(value)
+      evalJS(value)
     }
   }
 }

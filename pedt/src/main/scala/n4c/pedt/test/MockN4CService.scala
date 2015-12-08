@@ -29,7 +29,7 @@ object MockN4CService extends App {
               "b6dc1169078fc4da7913fa153e47e1a5" -> Source.fromFile("pedt/src/test/resources/task4.json").mkString,
               "132ecd77dc5a8ecfd36ce6bb149d208f" -> Source.fromFile("pedt/src/test/resources/task5.json").mkString,
               "bfef82a97bd7af9103ced97ca570c8e3" -> Source.fromFile("pedt/src/test/resources/task6.json").mkString)
-            tasks.getOrElse(taskId, "task not found.")
+            Some(tasks.getOrElse(taskId, "task not found."))
           }
         }
       } ~ path("query") {
@@ -39,7 +39,7 @@ object MockN4CService extends App {
             complete {
               val scopes = Map[String, String]("n4c:/a/b/c/sink" -> """["http://127.0.0.1:8083/"]""",
                 "n4c:/a/b/c/map" -> """["http://127.0.0.1:8083/", "http://127.0.0.1:8084/", "http://127.0.0.1:8085/"]""")
-              scopes.getOrElse(URLDecoder.decode(scope, "UTF-8"), "scope not found.") // ToResponseMarshaller("scope not found.")
+              Some(scopes.getOrElse(URLDecoder.decode(scope, "UTF-8"), "scope not found.")) // ToResponseMarshaller("scope not found.")
             }
           })
         }

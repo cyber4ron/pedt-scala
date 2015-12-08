@@ -17,9 +17,6 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref>
-            <ref>STDOUT</ref>
-            <ref>FILE</ref>
-        </appender-ref>
+        <appender-ref ref="STDOUT" />
     </root>
 </configuration>

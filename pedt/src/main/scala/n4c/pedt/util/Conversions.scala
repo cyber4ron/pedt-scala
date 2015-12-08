@@ -3,31 +3,35 @@ package n4c.pedt.util
 import n4c.pedt.context.JSContext
 import JSContext._
 import jdk.nashorn.api.scripting.ScriptObjectMirror
+import org.slf4j.LoggerFactory
 import spray.json._
 
 object Conversions {
-  private[n4c] implicit def nashornToString(obj: Any): String = obj.asInstanceOf[AnyRef] match {
-    case x: ScriptObjectMirror =>
-      x.asInstanceOf[ScriptObjectMirror].getClassName match {
-        case "Array"    => invokeJSFunc("jsonToString", x).toString
-        case "Object"   => invokeJSFunc("jsonToString", x).toString
-        case "Function" => "function is unsupported."
-        case _          => "unsupported."
+  private val log = LoggerFactory.getLogger(Conversions.getClass)
+  /**
+   * 一般marshalling用到
+   */
+  private[n4c] implicit def nashornToString(ref: Option[AnyRef]): String = ref.flatMap {
+    case x: ScriptObjectMirror => x.asInstanceOf[ScriptObjectMirror].getClassName match {
+        case "Array" => invokeJSFunc("jsonToString", x).map(_.toString)
+        case "Object" => invokeJSFunc("jsonToString", x).map(_.toString)
+        case "Function" => Some("function type is unsupported.")
+        case _ => Some("unsupported ScriptObjectMirror type.")
       }
-    case x: AnyRef => x.toString // should be plain type, e.g. String/Integer/...
-    case _         => "" // null
-  }
+    case x: AnyRef => Some(x.toString) // should be plain type, e.g. String/Integer/...
+    case _ => Some("value of ref is null.") // null
+  } getOrElse "shouldn't be here."
 
-  private[n4c] implicit def nashornToJsValue(obj: Any): JsValue = obj.asInstanceOf[AnyRef] match {
+  private[n4c] implicit def nashornToJsValue(ref: AnyRef): Option[JsValue] = ref match {
     case x: ScriptObjectMirror =>
       import spray.json._
       x.asInstanceOf[ScriptObjectMirror].getClassName match {
-        case "Array"    => invokeJSFunc("jsonToString", x).toString.parseJson
-        case "Object"   => invokeJSFunc("jsonToString", x).toString.parseJson
-        case "Function" => JsString("function is unsupported.")
-        case _          => JsString("unsupported.")
+        case "Array"    => invokeJSFunc("jsonToString", x).map(_.toString.parseJson)
+        case "Object"   => invokeJSFunc("jsonToString", x).map(_.toString.parseJson)
+        case "Function" => None
+        case _          => None
       }
-    case x => x.toString.parseJson // should be plain type, e.g. String/Integer/...
+    case x => Some(x.toString.parseJson) // should be plain type, e.g. String/Integer/...
   }
 
   private[n4c] def jsValueToScala(value: JsValue): AnyRef = {

@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 import scala.util.Properties._
 
 object HttpContext {
-  val log = LoggerFactory.getLogger(HttpContext.getClass)
+  private val log = LoggerFactory.getLogger(HttpContext.getClass)
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import MarshallingSupport._
