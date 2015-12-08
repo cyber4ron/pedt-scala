@@ -1,0 +1,4 @@
+{
+  "stringToJson": "function stringToJson(jsonStr) { return JSON.parse(jsonStr); }",
+  "jsonToString": "function jsonToString(obj) { return JSON.stringify(obj); }"
+}
