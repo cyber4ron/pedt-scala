@@ -1,11 +1,12 @@
-package n4c.http
+package n4c.pedt.http
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.ActorMaterializer
-import n4c.util.Conversions
+import n4c.pedt.util.Conversions
+import Conversions
 import spray.json._
 
 object MarshallingSupport {

@@ -1,4 +1,4 @@
-package n4c.http
+package n4c.pedt.http
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
-import n4c.core.PEDT
+import n4c.pedt.core.PEDT
 
 class HttpServer(host: String, port: Int) {
   def start() {

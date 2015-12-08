@@ -1,4 +1,4 @@
-package n4c.util
+package n4c.pedt.util
 
 import java.net.URLEncoder
 

@@ -1,9 +1,9 @@
-package n4c.http
+package n4c.pedt.http
 
 import akka.http.scaladsl.marshalling.{ Marshaller, ToResponseMarshaller }
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.server.{ Directives, Route }
-import n4c.core.PEDT
+import n4c.pedt.core.PEDT
 import spray.json._
 
 import scala.collection.immutable.HashMap

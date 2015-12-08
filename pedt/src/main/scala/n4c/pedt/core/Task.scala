@@ -1,8 +1,9 @@
-package n4c.core
+package n4c.pedt.core
 
 import javax.script.ScriptException
 
-import n4c.context.JSContext._
+import n4c.pedt.context.JSContext
+import JSContext._
 import jdk.nashorn.api.scripting.NashornException
 import spray.json._
 

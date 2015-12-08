@@ -1,7 +1,9 @@
-package n4c.util
+package n4c.pedt.util
 
 import java.net.URLEncoder
 
+import n4c.pedt.context.HttpContext
+import n4c.pedt.core.{Scope, Task}
 import org.slf4j.LoggerFactory
 
 import scala.util.Properties.envOrElse
@@ -9,8 +11,8 @@ import scala.util.Properties.envOrElse
 import com.typesafe.config.ConfigFactory
 import spray.json._
 
-import n4c.context.HttpContext._
-import n4c.core.{ Scope, Task }
+import HttpContext._
+import n4c.core.Task
 
 /**
  * should be thread safe

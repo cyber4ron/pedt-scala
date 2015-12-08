@@ -1,8 +1,10 @@
-package n4c.core
+package n4c.pedt.core
 
-import n4c.core.Method.Executable
-import n4c.core.Scope.Resources
-import n4c.util.{ Conversions, ScopeProxy }
+import Method.Executable
+import Scope.Resources
+import n4c.pedt.context.HttpContext
+import n4c.pedt.util.{Conversions, ScopeProxy}
+import n4c.util.Conversions
 import spray.json._
 
 import scala.collection.immutable.Iterable
@@ -79,7 +81,7 @@ class Method(methodDef: JsObject) {
   }
 
   def execute(args: Map[String, JsValue]): Any = {
-    import n4c.context.HttpContext._
+    import HttpContext._
 
     log.info(arguments + s", in method.execute, args: $args")
     arguments = Arguments.mix(arguments, args)

@@ -1,8 +1,8 @@
-package n4c.context
+package n4c.pedt.context
 
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.typesafe.config.ConfigFactory
-import n4c.http.HttpClient
+import n4c.pedt.http.{HttpClient, MarshallingSupport}
 import org.slf4j.LoggerFactory
 import spray.json.JsValue
 
@@ -14,7 +14,7 @@ object HttpContext {
   val log = LoggerFactory.getLogger(HttpContext.getClass)
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  import n4c.http.MarshallingSupport._
+  import MarshallingSupport._
 
   val config = ConfigFactory.load()
 

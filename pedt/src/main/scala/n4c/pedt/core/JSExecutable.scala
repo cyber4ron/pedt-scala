@@ -1,9 +1,9 @@
-package n4c.core
+package n4c.pedt.core
 
 import java.util.Base64
-
-import n4c.context.JSContext
-import n4c.util.TaskProxy
+import n4c.pedt.context.JSContext
+import n4c.pedt.util.TaskProxy
+import TaskProxy
 import org.slf4j.LoggerFactory
 import spray.json.{ JsString, JsValue }
 
@@ -41,7 +41,7 @@ class Data(override val subtype: String,
            override val encodeType: String,
            override val value: String = "") extends Content {
   def execute(args: Object*): Any = {
-    import n4c.context.JSContext._
+    import JSContext._
     evalJS(value)
   }
 }

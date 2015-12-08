@@ -1,4 +1,4 @@
-package n4c.http
+package n4c.pedt.http
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http

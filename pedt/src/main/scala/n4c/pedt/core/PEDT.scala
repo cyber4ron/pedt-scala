@@ -1,10 +1,12 @@
-package n4c.core
+package n4c.pedt.core
 
 import com.typesafe.config.Config
-import n4c.core.PEDT.{ LocalResult, RemoteResult }
-import n4c.util.Conversions.jsValueToJava
-import n4c.util.Utility.toUrlQueryFormat
-import n4c.util.{ Conversions, ScopeProxy, TaskProxy }
+import PEDT.{ LocalResult, RemoteResult }
+import n4c.pedt.context.HttpContext
+import n4c.pedt.util.{Utility, Conversions, TaskProxy, ScopeProxy}
+import Conversions.jsValueToJava
+import Utility.toUrlQueryFormat
+import n4c.util.Conversions
 import org.slf4j.LoggerFactory
 import spray.json.JsValue
 
@@ -37,7 +39,7 @@ class PEDT(config: Config) {
   def executeTask = run _
 
   def map(scope: String, taskId: String, args: Map[String, JsValue]): Seq[RemoteResult] = {
-    import n4c.context.HttpContext.{ unmarshalTimeoutMs, httpClient, request }
+    import HttpContext.{ unmarshalTimeoutMs, httpClient, request }
     queryScope(scope) map { scope =>
       scope.getResources map { res =>
         val kvs = toUrlQueryFormat(args)
@@ -55,7 +57,7 @@ class PEDT(config: Config) {
   }
 
   def mapEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]]): Seq[RemoteResult] = {
-    import n4c.context.HttpContext._
+    import HttpContext._
     queryScope(scope) map { scope =>
       val resources: Seq[String] = scope.getResources
       argsSeq.zipWithIndex map { args =>

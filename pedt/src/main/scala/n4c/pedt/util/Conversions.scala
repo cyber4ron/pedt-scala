@@ -1,6 +1,7 @@
-package n4c.util
+package n4c.pedt.util
 
-import n4c.context.JSContext._
+import n4c.pedt.context.JSContext
+import JSContext._
 import jdk.nashorn.api.scripting.ScriptObjectMirror
 import spray.json._
 
