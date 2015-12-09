@@ -6,8 +6,10 @@ import n4c.pedt.util.TaskProxy
 import org.slf4j.LoggerFactory
 import spray.json.{ JsString, JsValue }
 
+import scala.concurrent.Future
+
 trait JSExecutable {
-  def execute(args: Object*): AnyRef
+  def execute(args: Object*): Future[AnyRef]
 }
 
 trait Content extends JSExecutable {
@@ -39,7 +41,7 @@ object Data {
 class Data(override val subtype: String,
            override val encodeType: String,
            override val value: String = "") extends Content {
-  def execute(args: Object*): Option[AnyRef] = {
+  def execute(args: Object*): Future[AnyRef] = {
     import JSContext._
     evalJS(value)
   }
@@ -69,7 +71,7 @@ class Script(override val subtype: String,
              override val encodeType: String,
              override val value: String = "") extends Content {
   private val log = LoggerFactory.getLogger(Script.getClass)
-  def execute(args: Object*): Option[AnyRef] = {
+  def execute(args: Object*): Future[AnyRef] = {
     log.info(s"in script.execute, args: $args")
     import JSContext._
     val funcNameCapture = """^[\s]*function\s+([^\s(]+)""".r // 前置换行

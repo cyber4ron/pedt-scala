@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import spray.json._
 
 import scala.collection.immutable.HashMap
+import concurrent.duration._
 
 class ServerRoute extends Directives {
   private val log = LoggerFactory.getLogger(classOf[ServerRoute])
@@ -30,6 +31,7 @@ class ServerRoute extends Directives {
         import MarshallingSupport.AnyRefMarshaller
         parameterSeq { params =>
           complete {
+            import n4c.pedt.util.Utility._
             val x = PEDT.runTask(taskId, params.filter(_._1 != "").map(x => x._1 -> {
               try {
                 x._2.parseJson
@@ -37,12 +39,12 @@ class ServerRoute extends Directives {
                 case _: Throwable => JsString(x._2)
               }
             }).toMap)
-            val y = x.getOrElse("undefined.")
-            if(y == "undefined.") {
+            val y = x withTimeout 1000.millis
+            if(y.isEmpty) {
               Thread.sleep(1)
             }
             log.info(s"to response, x: $x, y: $y")
-            Some(y)
+            y
           }
         }
       }

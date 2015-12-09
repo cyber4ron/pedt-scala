@@ -52,7 +52,7 @@ object PEDTSpec extends App {
       Map("1" -> JsString("a c"))))
 
   import spray.json._
-  val mappedJsValue = JsArray(mapped.map(x => Conversions.nashornToString(Some(x)).parseJson): _*)
+  val mappedJsValue = null // JsArray(mapped.map(x => Conversions.nashornToString(Some(x)).parseJson): _*)
   val y = PEDT.run("script:javascript:base64:ZnVuY3Rpb24gd29yZF9jb3VudF9yZWR1Y2UoZGljdHMpIHsKICAgIHByaW50KGRpY3RzKTsKICAgIHByaW50KGRpY3RzLnNpemUoKSk7CiAgICB2YXIgcmVzdWx0ID0ge307CiAgICBmb3IodmFyIGkgPSAwOyBpIDwgZGljdHMuc2l6ZSgpOyBpKyspIHsKICAgICAgICBwcmludChKU09OLnN0cmluZ2lmeShkaWN0c1tpXSkpOwogICAgICAgIGZvcih2YXIgd29yZCBpbiBkaWN0c1tpXSkgewogICAgICAgICAgICBwcmludCh3b3JkKTsKICAgICAgICAgICAgaWYod29yZCBpbiByZXN1bHQpIHJlc3VsdFt3b3JkXSs9ZGljdHNbaV1bd29yZF07CiAgICAgICAgICAgIGVsc2UgcmVzdWx0W3dvcmRdID0gZGljdHNbaV1bd29yZF07CiAgICAgICAgfQogICAgfQogICAgcHJpbnQoSlNPTi5zdHJpbmdpZnkocmVzdWx0KSk7CiAgICByZXR1cm4gcmVzdWx0Owp9Cg==",
     mappedJsValue)
 

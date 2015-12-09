@@ -7,6 +7,7 @@ object Dependencies {
   val scalaVersion = "2.11.7"
   val akkaStreamVersion = "1.0"
   val slf4jVersion = "1.7.7"
+  val akkaVersion = "2.3.11"
 
   val log = Seq("org.slf4j" % "slf4j-api" % slf4jVersion,
                 "org.slf4j" % "jcl-over-slf4j" % slf4jVersion,
@@ -15,15 +16,19 @@ object Dependencies {
 
   val scalaReflect = Seq("org.scala-lang" % "scala-reflect" % scalaVersion)
 
+  // val akka = Seq("com.typesafe.akka" %% "akka-actor" % akkaVersion)
+
   val akkaHttp = Seq("com.typesafe.akka" %% "akka-stream-experimental" % akkaStreamVersion,
                      "com.typesafe.akka" %% "akka-http-core-experimental" % akkaStreamVersion,
                      "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamVersion,
                      "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamVersion,
                      "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion)
 
+  val play = Seq("com.typesafe.play" %% "play" % "2.4.4")
+
   val sprayJson = Seq("io.spray" %% "spray-json" % "1.3.1")
 
-  val basic = log ++ akkaHttp ++ sprayJson
+  val basic = log ++ akkaHttp ++ sprayJson ++ play
 }
 
 object Formatting {

@@ -7,14 +7,15 @@ import n4c.pedt.util.{Conversions, ScopeProxy, TaskProxy}
 import org.slf4j.LoggerFactory
 import spray.json.JsValue
 
-import scala.collection.JavaConversions._
-import scala.concurrent.{Await, TimeoutException}
+import scala.concurrent.Future
 
 object PEDT {
-  type RemoteResult = JsValue
-  type LocalResult = AnyRef
+  type RemoteResult = JsValue // http json result
+  type LocalResult = AnyRef //  returned type of nashorn methods
 
   private val log = LoggerFactory.getLogger(PEDT.getClass)
+
+  import concurrent.ExecutionContext.Implicits.global
 
   val executeTaskUrlFormat = ""
 
@@ -25,81 +26,84 @@ object PEDT {
   /**
    * @param task: String/Function/Object, 以"task:"为前缀的字符串，或函数，或对象。
    */
-  def run(task: String, args: JsValue*): Option[LocalResult] =
-    Script(task).flatMap(_.execute(args.map(Conversions.jsValueToJava): _*))
+  def run(task: String, args: JsValue*): Future[LocalResult] = {
+    Script(task) map {
+      _.execute(args.map(Conversions.jsValueToJava): _*)
+    } getOrElse Future {
+      throw new IllegalStateException("sss")
+    }
+  }
 
-  def runTask(taskId: String, args: Map[String, JsValue]): Option[LocalResult] = {
-    val x = TaskProxy.get(taskId).flatMap(_.execute(args))
-    log.info(s"in pedt, result of runTask: $x")
-    x
+  def runTask(taskId: String, args: Map[String, JsValue]): Future[LocalResult] = {
+    TaskProxy.get(taskId) map {
+      _.execute(args)
+    } getOrElse Future {
+      throw new IllegalStateException("sss")
+    }
   }
 
   def executeTask = run _
 
-  def map(scope: String, taskId: String, args: Map[String, JsValue]): Seq[RemoteResult] =
-    queryScope(scope) map (PEDT.map(_, taskId, args)) getOrElse Array.empty[JsValue].toSeq
+  def map(scope: String, taskId: String, args: Map[String, JsValue]): Future[Seq[RemoteResult]] =
+    queryScope(scope) map {
+      PEDT.map(_, taskId, args)
+    } getOrElse Future {
+      throw new IllegalStateException("sss")
+    }
 
-  def map(scope: Scope, taskId: String, args: Map[String, JsValue]): Seq[RemoteResult] = {
-    import HttpContext.{httpClient, request, unmarshalTimeoutMs}
-    scope.getResources map { res =>
+  def map(scope: Scope, taskId: String, args: Map[String, JsValue]): Future[Seq[RemoteResult]] = {
+    import HttpContext.{httpClient, request}
+    val x = scope.getResources map { res =>
       val kvs = toUrlQueryFormat(args)
       if (kvs == "") request(s"${res}execute_task:$taskId")
       else request(s"${res}execute_task:$taskId?$kvs")
-    } map { future =>
-      try {
-        Some(Await.result(future, unmarshalTimeoutMs))
-      } catch {
-        case _: TimeoutException => None
-        case _: Throwable        => None
-      }
-    } filter (_.isDefined) map (_.get)
+    }
+    Future.sequence(x)
   }
 
-  def mapEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]]): Seq[RemoteResult] = {
+  def mapEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]]): Future[Seq[RemoteResult]] = {
     import HttpContext._
     queryScope(scope) map { scope =>
       val resources: Seq[String] = scope.getResources
-      argsSeq.zipWithIndex map { args =>
+      val x = argsSeq.zipWithIndex map { args =>
         val kvs = toUrlQueryFormat(args._1)
         if (kvs == "") request(s"${resources(args._2 % resources.length)}execute_task:$taskId")
         else request(s"${resources(args._2 % resources.length)}execute_task:$taskId?$kvs")
-      } map { future =>
-        try {
-          val x = Await.result(future, unmarshalTimeoutMs)
-          log.info(s"request returned, result = $x")
-          Some(x)
-        } catch {
-          case _: TimeoutException => None
-          case _: Throwable        => None
-        }
-      } filter (_.isDefined) map (_.get)
-    } getOrElse Array.empty[JsValue].toSeq
+      }
+      Future.sequence(x)
+    } getOrElse Future {
+      throw new IllegalStateException("sss")
+    }
   }
 
-  def reduce(scope: String, taskId: String, args: Map[String, JsValue], reduce: Option[String]): Option[LocalResult] = {
-    val mapped = map(scope, taskId, args)
-    import collection.JavaConversions._
+  def reduce(scope: String, taskId: String, args: Map[String, JsValue], reduce: Option[String]): Future[LocalResult] = {
+    val futureOfMapped = map(scope, taskId, args)
     reduce flatMap { x =>
-      Script(x) flatMap { y => Some(y.execute(seqAsJavaList(mapped.map(jsValueToJava)))) }
-    } getOrElse None
+      Script(x) map { y => futureOfMapped map { z =>
+        y.execute(z.map(jsValueToJava))}
+      }
+    } getOrElse Future {
+      throw new IllegalStateException("sss")
+    }
   }
 
-  def reduceEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]], reduce: Option[String]): Option[LocalResult] = {
-    val mapped = mapEach(scope, taskId, argsSeq)
+  def reduceEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]], reduce: Option[String]): Future[LocalResult] = {
+    val futureOfMapped = mapEach(scope, taskId, argsSeq)
     reduce flatMap { x =>
-      Script(x) flatMap { y => Some(y.execute(seqAsJavaList(mapped.map(jsValueToJava)))) }
-    } getOrElse None
+      Script(x) map { y => futureOfMapped map {
+        z => y.execute(z.map(jsValueToJava))}
+      }
+    } getOrElse Future {
+      throw new IllegalStateException("sss")
+    }
   }
 
-  /**
-   * function task.daemon(distributionScope, taskId, daemon, daemonArgs)
-   *  - 参数：
-   *     distributionScope, task: (参见task.map)
-   *     daemon: function, 在task.map行为之前调用的函数
-   *     daemonArgs: Object, 使用task.run()来调用daemon时传入的参数
-   *  - 返回值：Array，是调用task.map()之后的结果。
-   */
-  def daemon(scope: String, taskId: String, daemonTask: String, daemonArgs: JsValue*): Option[Seq[RemoteResult]] = {
-    run(daemonTask, daemonArgs: _*).map(x => Conversions.nashornToJsValue(x)).filter(_.isDefined).map(x => map(scope, taskId, Map[String, JsValue]("x" -> x.get)))
+  def daemon(scope: String, taskId: String, daemonTask: String, daemonArgs: JsValue*): Future[Seq[RemoteResult]] = {
+    run(daemonTask, daemonArgs: _*).map(Conversions.nashornToJsValue) flatMap { x =>
+      if(x.isDefined) map(scope, taskId, Map[String, JsValue]("x" -> x.get))
+      else Future {
+        throw new IllegalStateException("sss")
+      }
+    }
   }
 }

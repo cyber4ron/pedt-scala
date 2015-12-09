@@ -13,8 +13,8 @@ object Conversions {
    */
   private[n4c] implicit def nashornToString(ref: Option[AnyRef]): String = ref.flatMap {
     case x: ScriptObjectMirror => x.asInstanceOf[ScriptObjectMirror].getClassName match {
-        case "Array" => invokeJSFunc("jsonToString", x).map(_.toString)
-        case "Object" => invokeJSFunc("jsonToString", x).map(_.toString)
+        case "Array" => invokeJSFuncBlocking("jsonToString", x).map(_.toString)
+        case "Object" => invokeJSFuncBlocking("jsonToString", x).map(_.toString)
         case "Function" => Some("function type is unsupported.")
         case _ => Some("unsupported ScriptObjectMirror type.")
       }
@@ -26,8 +26,8 @@ object Conversions {
     case x: ScriptObjectMirror =>
       import spray.json._
       x.asInstanceOf[ScriptObjectMirror].getClassName match {
-        case "Array"    => invokeJSFunc("jsonToString", x).map(_.toString.parseJson)
-        case "Object"   => invokeJSFunc("jsonToString", x).map(_.toString.parseJson)
+        case "Array"    => invokeJSFuncBlocking("jsonToString", x).map(_.toString.parseJson)
+        case "Object"   => invokeJSFuncBlocking("jsonToString", x).map(_.toString.parseJson)
         case "Function" => None
         case _          => None
       }

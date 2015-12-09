@@ -5,6 +5,8 @@ import n4c.pedt.core.Scope.Resources
 import n4c.pedt.util.{Conversions, ScopeProxy}
 import spray.json._
 
+import scala.concurrent.Future
+
 object Scope {
   type Resources = Seq[String]
 
@@ -47,7 +49,7 @@ class Arguments(private[n4c] val scalaArgs: Map[String, JsValue]) {
 }
 
 object Method {
-  type Executable = { def execute(x: Object*): Option[AnyRef] } // call by reflection
+  type Executable = { def execute(x: Object*): Future[AnyRef] } // call by reflection
   def apply(methodDef: JsObject) = new Method(methodDef)
 }
 
@@ -68,7 +70,7 @@ class Method(methodDef: JsObject) {
     case _ => throw new IllegalArgumentException
   }
 
-  def execute(args: Map[String, JsValue]): Option[AnyRef] = {
+  def execute(args: Map[String, JsValue]): Future[AnyRef] = {
     arguments = Arguments.mix(arguments, args)
 
     distrType match {
@@ -82,7 +84,7 @@ class Method(methodDef: JsObject) {
         executable match {
           case task: Task =>
             if (scope.isEmpty) throw new IllegalStateException("")
-            Some(PEDT.map(scope.get, task.taskId.get, arguments.get.scalaArgs))
+            PEDT.map(scope.get, task.taskId.get, arguments.get.scalaArgs)
           case _ => throw new IllegalStateException("")
         }
       case _ => throw new IllegalStateException
