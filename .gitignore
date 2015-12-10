@@ -10,5 +10,11 @@
 
 /pedt/src/main/scala/n4c/test/
 /pedt/src/test/
-/test/
+/side-test/
 
+/pedt/project
+/test/project
+
+/*/src/*/java
+
+/src

@@ -1,14 +1,15 @@
 package n4c.pedt.http
 
-import akka.http.scaladsl.marshalling.{ Marshaller, ToResponseMarshaller }
+import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
 import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.server.{ Directives, Route }
+import akka.http.scaladsl.server.{Directives, Route}
 import n4c.pedt.core.PEDT
+import n4c.pedt.util.ScopeProxy
 import org.slf4j.LoggerFactory
 import spray.json._
 
 import scala.collection.immutable.HashMap
-import concurrent.duration._
+import scala.concurrent.duration._
 
 class ServerRoute extends Directives {
   private val log = LoggerFactory.getLogger(classOf[ServerRoute])
@@ -39,12 +40,21 @@ class ServerRoute extends Directives {
                 case _: Throwable => JsString(x._2)
               }
             }).toMap)
-            val y = x withTimeout 1000.millis
+            val y = x waitWithin 1000.millis
             if(y.isEmpty) {
               Thread.sleep(1)
             }
-            log.info(s"to response, x: $x, y: $y")
+            log.info(s"to marshal and response, x: $x, y: $y")
             y
+          }
+        }
+      }
+    } ~ path("notify:" ~ "^(.+)$".r) { scope =>
+      get {
+        parameterSeq { params =>
+          complete {
+            ScopeProxy.invalidate(scope)
+            """{"status": "ok"}"""
           }
         }
       }

@@ -1,12 +1,14 @@
 package n4c.pedt.core
 
-import n4c.pedt.context.HttpContext
+import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpMethods, MediaTypes}
+import n4c.pedt.context.HttpContext.{host, port, request}
 import n4c.pedt.util.Conversions.jsValueToJava
-import n4c.pedt.util.Utility.toUrlQueryFormat
+import n4c.pedt.util.Utility.{toUrlQueryFormat, TimeBoundedFuture}
 import n4c.pedt.util.{Conversions, ScopeProxy, TaskProxy}
 import org.slf4j.LoggerFactory
 import spray.json.JsValue
 
+import scala.collection.JavaConversions
 import scala.concurrent.Future
 
 object PEDT {
@@ -42,7 +44,7 @@ object PEDT {
     }
   }
 
-  def executeTask = run _
+  def executeTask = runTask _
 
   def map(scope: String, taskId: String, args: Map[String, JsValue]): Future[Seq[RemoteResult]] =
     queryScope(scope) map {
@@ -52,7 +54,6 @@ object PEDT {
     }
 
   def map(scope: Scope, taskId: String, args: Map[String, JsValue]): Future[Seq[RemoteResult]] = {
-    import HttpContext.{httpClient, request}
     val x = scope.getResources map { res =>
       val kvs = toUrlQueryFormat(args)
       if (kvs == "") request(s"${res}execute_task:$taskId")
@@ -62,7 +63,6 @@ object PEDT {
   }
 
   def mapEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]]): Future[Seq[RemoteResult]] = {
-    import HttpContext._
     queryScope(scope) map { scope =>
       val resources: Seq[String] = scope.getResources
       val x = argsSeq.zipWithIndex map { args =>
@@ -76,23 +76,23 @@ object PEDT {
     }
   }
 
-  def reduce(scope: String, taskId: String, args: Map[String, JsValue], reduce: Option[String]): Future[LocalResult] = {
+  def reduce(scope: String, taskId: String, args: Map[String, JsValue], reduceTask: String): Future[LocalResult] = {
+    import JavaConversions._
     val futureOfMapped = map(scope, taskId, args)
-    reduce flatMap { x =>
-      Script(x) map { y => futureOfMapped map { z =>
-        y.execute(z.map(jsValueToJava))}
-      }
+    Script(reduceTask) map { script =>
+      futureOfMapped flatMap { seq =>
+        script.execute(seqAsJavaList(seq.map(jsValueToJava)))}
     } getOrElse Future {
       throw new IllegalStateException("sss")
     }
   }
 
-  def reduceEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]], reduce: Option[String]): Future[LocalResult] = {
+  def reduceEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]], reduceTask: String): Future[LocalResult] = {
+    import JavaConversions._
     val futureOfMapped = mapEach(scope, taskId, argsSeq)
-    reduce flatMap { x =>
-      Script(x) map { y => futureOfMapped map {
-        z => y.execute(z.map(jsValueToJava))}
-      }
+    Script(reduceTask) map { script =>
+      futureOfMapped flatMap { seq =>
+        script.execute(seqAsJavaList(seq.map(jsValueToJava)))}
     } getOrElse Future {
       throw new IllegalStateException("sss")
     }
@@ -105,5 +105,17 @@ object PEDT {
         throw new IllegalStateException("sss")
       }
     }
+  }
+
+  def subscribe(scope: String) {
+    import scala.concurrent.duration._
+    val content = s"""{
+                  |	"key": "$scope",
+                  |	"type": "scope",
+                  |	"version": "1.1",
+                  |	"receive": "http://$host:$port/notify"
+                  |}""".stripMargin
+    val entity = HttpEntity(ContentType(MediaTypes.`application/json`), content)
+    request(s"subscribe?$scope", HttpMethods.POST, entity) waitWithin 1.second
   }
 }

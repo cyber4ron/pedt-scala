@@ -43,7 +43,7 @@ class Data(override val subtype: String,
            override val value: String = "") extends Content {
   def execute(args: Object*): Future[AnyRef] = {
     import JSContext._
-    evalJS(value)
+    evalJSSync(value)
   }
 }
 
@@ -79,10 +79,10 @@ class Script(override val subtype: String,
     if (matches.isDefined) {
       if (matches.get.groupCount == 1) {
         val funcName = matches.get.subgroups.head
-        declareAndInvokeJSFunc(funcName, value, args: _*) // args must be java objects
+        declareAndInvokeJSFuncSync(funcName, value, args: _*) // args must be java objects
       } else throw new IllegalStateException
     } else {
-      evalJS(value)
+      evalJSSync(value)
     }
   }
 }

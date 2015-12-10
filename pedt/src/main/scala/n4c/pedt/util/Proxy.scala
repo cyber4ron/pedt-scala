@@ -53,6 +53,15 @@ object ScopeProxy extends Proxy[Scope, Scope]({
       case _ => None
     }
   }
+
+  def invalidate(scope: String) {
+    retrieve(scope) map { scopeObj =>
+      log.info(s"refreshing scope proxy cache, scope: $scope, resources: ${scopeObj.getResources.mkString(", ")}")
+      put(scope, scopeObj)
+    } getOrElse {
+      log.error(s"retrieve scope failed, scope: $scope")
+    }
+  }
 }
 
 object TaskProxy extends Proxy[Task, JsValue]({

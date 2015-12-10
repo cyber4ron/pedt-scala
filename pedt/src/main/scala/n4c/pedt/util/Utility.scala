@@ -3,11 +3,11 @@ package n4c.pedt.util
 import java.net.URLEncoder
 import java.util.concurrent.TimeoutException
 
+import akka.actor.ActorSystem
 import org.slf4j.LoggerFactory
-import play.libs.Akka
 import spray.json._
 
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
 import scala.util.{Failure, Success}
 
@@ -16,8 +16,10 @@ object Utility {
   import concurrent.ExecutionContext.Implicits.global
 
   sealed trait TimeBounded[T] {
-    def withTimeout(after: Duration): Option[T]
+    def waitWithin(time: Duration): Option[T]
   }
+
+  val system = ActorSystem() // name?
 
   /**
    * wrap the future in a promise, and use a timer to fail the promise if timeout, 
@@ -26,8 +28,8 @@ object Utility {
   private[pedt] implicit def TimeBoundedFuture[T](f: Future[T]): TimeBounded[T] = new TimeBounded[T] {
     private val p = Promise[T]()
 
-    def withTimeout(after: Duration): Option[T] = {
-      val timer = Akka.system.scheduler.scheduleOnce(after.toMillis.millis) {
+    def waitWithin(time: Duration): Option[T] = {
+      val timer = system.scheduler.scheduleOnce(time.toMillis.millis) {
         p.tryFailure(new TimeoutException("timeout, promise failed."))
       }
 
@@ -39,7 +41,7 @@ object Utility {
       p.completeWith(f)
 
       try {
-        Some(Await.result(p.future, after + 1.second))
+        Some(Await.result(p.future, time + 1.second)) //
       } catch {
         case ex: Throwable =>
           log.error("await result failed, ex: " + ex.getMessage)

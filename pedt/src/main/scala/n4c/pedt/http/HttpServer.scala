@@ -11,7 +11,7 @@ class HttpServer(host: String, port: Int) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
 
-    val route = new ServerRoute().route // config?
+    val route = new ServerRoute().route() // config?
     val serverRoute = Directives.respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*"))(route)
 
     val source = Http().bind(host, port)
