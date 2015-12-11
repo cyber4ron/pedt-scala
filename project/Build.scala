@@ -5,9 +5,9 @@ import AssemblyKeys._
 
 object Dependencies {
   val scalaVersion = "2.11.7"
-  val akkaStreamVersion = "1.0"
-  val slf4jVersion = "1.7.7"
-  val akkaVersion = "2.3.11"
+  val slf4jVersion = "1.7.12"
+  val akkaVersion = "2.3.14"
+  val sprayVersion = "1.3.3"
 
   val log = Seq("org.slf4j" % "slf4j-api" % slf4jVersion,
                 "org.slf4j" % "jcl-over-slf4j" % slf4jVersion,
@@ -16,19 +16,18 @@ object Dependencies {
 
   val scalaReflect = Seq("org.scala-lang" % "scala-reflect" % scalaVersion)
 
-  // val akka = Seq("com.typesafe.akka" %% "akka-actor" % akkaVersion)
-
-  val akkaHttp = Seq("com.typesafe.akka" %% "akka-stream-experimental" % akkaStreamVersion,
-                     "com.typesafe.akka" %% "akka-http-core-experimental" % akkaStreamVersion,
-                     "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamVersion,
-                     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamVersion,
-                     "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion)
-
-  val play = Seq("com.typesafe.play" %% "play" % "2.4.4")
+  val spray = Seq("io.spray"            %%  "spray-can"     % sprayVersion,
+                  "io.spray"            %%  "spray-routing" % sprayVersion,
+                  "io.spray"            %%  "spray-testkit" % sprayVersion  % "test",
+                  "com.typesafe.akka"   %%  "akka-actor"    % akkaVersion,
+                  "com.typesafe.akka"   %%  "akka-testkit"  % akkaVersion   % "test",
+                  "org.specs2"          %%  "specs2-core"   % "2.3.13" % "test")
 
   val sprayJson = Seq("io.spray" %% "spray-json" % "1.3.1")
 
-  val basic = log ++ akkaHttp ++ sprayJson ++ play
+  val play = Seq("com.typesafe.play" %% "play" % "2.4.4")
+
+  val basic = log ++ spray ++ sprayJson ++ play
 }
 
 object Formatting {
@@ -77,6 +76,13 @@ object Build extends sbt.Build {
                   settings(assemblySettings ++ extraSettings: _*)
 
   lazy val test = Project("test", file("test")).
+                  dependsOn(pedt).
+                  settings(basicSettings: _*).
+                  settings(libraryDependencies ++= Dependencies.basic ++ Dependencies.scalaReflect).
+                  settings(Formatting.settings: _*)
+
+
+  lazy val sideTest = Project("side-test", file("side-test")).
                   dependsOn(pedt).
                   settings(basicSettings: _*).
                   settings(libraryDependencies ++= Dependencies.basic ++ Dependencies.scalaReflect).

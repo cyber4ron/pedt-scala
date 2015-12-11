@@ -2,7 +2,7 @@ package n4c.pedt.core
 
 import n4c.pedt.core.Method.Executable
 import n4c.pedt.core.Scope.Resources
-import n4c.pedt.util.{Conversions, ScopeProxy}
+import n4c.pedt.util.{Conversion, ScopeProxy}
 import org.slf4j.LoggerFactory
 import spray.json._
 
@@ -45,7 +45,7 @@ object Arguments {
 
 class Arguments(private[n4c] val scalaArgs: Map[String, JsValue]) {
   import scala.collection.JavaConversions._
-  val javaArgs: java.util.Map[String, Object] = scalaArgs.map(kv => kv._1 -> Conversions.jsValueToJava(kv._2))
+  val javaArgs: java.util.Map[String, Object] = scalaArgs.map(kv => kv._1 -> Conversion.jsValueToJava(kv._2))
   def getArg: java.util.Map[String, Object] = javaArgs
   def getArgArray: Array[Object] = javaArgs.values().toArray
 }

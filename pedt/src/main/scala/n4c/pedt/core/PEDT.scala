@@ -1,38 +1,56 @@
 package n4c.pedt.core
 
-import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpMethods, MediaTypes}
-import n4c.pedt.context.HttpContext.{host, port, request}
-import n4c.pedt.util.Conversions.jsValueToJava
-import n4c.pedt.util.Utility.{toUrlQueryFormat, TimeBoundedFuture}
-import n4c.pedt.util.{Conversions, ScopeProxy, TaskProxy}
+import com.typesafe.config.ConfigFactory
+import n4c.pedt.context.HttpContext.{host, port, request, httpClient}
+import n4c.pedt.util.Conversion.jsValueToJava
+import n4c.pedt.util.Utility.{TimeBoundedFuture, toUrlQueryFormat}
+import n4c.pedt.util.{Conversion, ScopeProxy, TaskProxy}
 import org.slf4j.LoggerFactory
+import spray.http.{HttpMethods, MediaTypes, HttpEntity}
 import spray.json.JsValue
 
 import scala.collection.JavaConversions
 import scala.concurrent.Future
 
 object PEDT {
-  type RemoteResult = JsValue // http json result
-  type LocalResult = AnyRef //  returned type of nashorn methods
+  type RemoteResult = JsValue // http json result type
+  type LocalResult = AnyRef // nashorn methods result type
 
   private val log = LoggerFactory.getLogger(PEDT.getClass)
-
   import concurrent.ExecutionContext.Implicits.global
 
-  val executeTaskUrlFormat = ""
+  val config = ConfigFactory.load()
+  val subscribeUrl = config.getString("n4c.service.subscribe")
 
-  def queryScope(scope: String): Option[Scope] = ScopeProxy.get(scope)
+  // methods
+  def queryScope(scope: String): Option[Scope] = {
+    try {
+      ScopeProxy.get(scope)
+    } catch {
+      case ex: Throwable =>
+        log.warn(s"get scope failed, scope: $scope")
+        None
+    }
+  }
 
-  def fetchTask(taskId: String): Option[Task] = TaskProxy.get(taskId)
+  def fetchTask(taskId: String): Option[Task] = {
+    try {
+      TaskProxy.get(taskId)
+    } catch {
+      case ex: Throwable =>
+        log.warn(s"get task failed, taskId: $taskId")
+        None
+    }
+  }
 
   /**
-   * @param task: String/Function/Object, 以"task:"为前缀的字符串，或函数，或对象。
+   * @param task: script:javascript:...
    */
   def run(task: String, args: JsValue*): Future[LocalResult] = {
     Script(task) map {
-      _.execute(args.map(Conversions.jsValueToJava): _*)
+      _.execute(args.map(Conversion.jsValueToJava): _*)
     } getOrElse Future {
-      throw new IllegalStateException("sss")
+      throw new IllegalStateException(s"parse task failed, task:[$task]")
     }
   }
 
@@ -40,7 +58,7 @@ object PEDT {
     TaskProxy.get(taskId) map {
       _.execute(args)
     } getOrElse Future {
-      throw new IllegalStateException("sss")
+      throw new IllegalStateException(s"get task failed, taskId:[$taskId]")
     }
   }
 
@@ -50,7 +68,7 @@ object PEDT {
     queryScope(scope) map {
       PEDT.map(_, taskId, args)
     } getOrElse Future {
-      throw new IllegalStateException("sss")
+      throw new IllegalStateException(s"query scope failed, scope: [$scope]")
     }
 
   def map(scope: Scope, taskId: String, args: Map[String, JsValue]): Future[Seq[RemoteResult]] = {
@@ -72,7 +90,7 @@ object PEDT {
       }
       Future.sequence(x)
     } getOrElse Future {
-      throw new IllegalStateException("sss")
+      throw new IllegalStateException(s"query scope failed, scope: [$scope]")
     }
   }
 
@@ -83,7 +101,7 @@ object PEDT {
       futureOfMapped flatMap { seq =>
         script.execute(seqAsJavaList(seq.map(jsValueToJava)))}
     } getOrElse Future {
-      throw new IllegalStateException("sss")
+      throw new IllegalStateException(s"parse reduceTask failed, reduceTask: [$reduceTask]")
     }
   }
 
@@ -94,15 +112,15 @@ object PEDT {
       futureOfMapped flatMap { seq =>
         script.execute(seqAsJavaList(seq.map(jsValueToJava)))}
     } getOrElse Future {
-      throw new IllegalStateException("sss")
+      throw new IllegalStateException(s"parse reduceTask failed, reduceTask: [$reduceTask]")
     }
   }
 
   def daemon(scope: String, taskId: String, daemonTask: String, daemonArgs: JsValue*): Future[Seq[RemoteResult]] = {
-    run(daemonTask, daemonArgs: _*).map(Conversions.nashornToJsValue) flatMap { x =>
+    run(daemonTask, daemonArgs: _*).map(Conversion.nashornToJsValue) flatMap { x =>
       if(x.isDefined) map(scope, taskId, Map[String, JsValue]("x" -> x.get))
       else Future {
-        throw new IllegalStateException("sss")
+        throw new IllegalStateException(s"run daemon failed, taskId: [$taskId]")
       }
     }
   }
@@ -115,7 +133,11 @@ object PEDT {
                   |	"version": "1.1",
                   |	"receive": "http://$host:$port/notify"
                   |}""".stripMargin
-    val entity = HttpEntity(ContentType(MediaTypes.`application/json`), content)
-    request(s"subscribe?$scope", HttpMethods.POST, entity) waitWithin 1.second
+    val entity = HttpEntity(MediaTypes.`application/json`, content)
+    try {
+      request(s"$subscribeUrl$scope", HttpMethods.POST, entity) waitWithin 1.second
+    } catch {
+      case ex: Throwable => log.warn(s"subscribe $scope failed, ex: ${ex.getMessage}")
+    }
   }
 }

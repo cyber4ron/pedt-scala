@@ -85,7 +85,7 @@ class Task(val taskId: Option[String],
   def distributed(taskObject: JsObject) {
     if (distributedMethod.isDefined) {
       import Utility._
-      val f = distributedMethod.get.execute(invokeJSFuncSync("stringToJson", PrettyPrinter(taskObject)))
+      val f = distributedMethod.get.execute(invokeFunctionExclusive("stringToJson", PrettyPrinter(taskObject)))
       f onComplete defaultHandler(s"distributed method succeed.", s"distributed method failed, ex.message: %s")
       f waitWithin 1.second
     }
@@ -115,5 +115,5 @@ class Task(val taskId: Option[String],
     }
   }
 
-  def toCompatibleJsObj = invokeJSFuncSync("stringToJson", PrettyPrinter(taskDef)) // todo: remove hardcode
+  def toCompatibleJsObj = invokeFunctionExclusive("stringToJson", PrettyPrinter(taskDef)) // todo: remove hardcode
 }

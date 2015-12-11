@@ -2,7 +2,7 @@ package n4c.pedt.context
 
 import javax.script.{ScriptException, Invocable, ScriptEngine, ScriptEngineManager}
 
-import n4c.pedt.util.Conversions
+import n4c.pedt.util.Conversion
 import org.slf4j.LoggerFactory
 import spray.json._
 
@@ -12,6 +12,7 @@ import scala.util.{Failure, Success}
 
 /**
  * todo: thread safety?, 单次执行需求(记录状态和挂掉重启？)
+ * ? NashornException?
  */
 object JSContext {
   private val log = LoggerFactory.getLogger(JSContext.getClass)
@@ -26,7 +27,7 @@ object JSContext {
     val x = Source.fromFile(jsHelperScrip).mkString.parseJson.asJsObject.fields
     x.foreach { x =>
       log.info(s"registering function: ${x._2.asInstanceOf[JsString].value}")
-      evalJSSync(x._2.asInstanceOf[JsString].value)
+      evalExclusive(x._2.asInstanceOf[JsString].value)
     }
   } catch {
     case ex: Throwable => log.error(ex.getMessage)
@@ -35,42 +36,42 @@ object JSContext {
   def getEngine = engine
   def getInvocable = invocable
 
-  // async
-  def evalJS(script: String): Future[AnyRef] = {
+  // 并行执行js
+  def eval(script: String): Future[AnyRef] = {
     val f = Future {
       log.info(s"$engine, evaluating: [$script]")
       engine.eval(script)
     }
     f onComplete {
-      case Success(x) => log.info(s"eval: [$script] succeed, result: $x")
+      case Success(x) => log.info(s"eval: [$script] succeed, result: ${Conversion.nashornToString(x)}")
       case Failure(ex) => log.error(s"eval: [$script] failed, ex.message: ${ex.getMessage}")
     }
     f
   }
 
-  def invokeJSFunc(funcName: String, args: Object*): Future[AnyRef] = {
+  def invokeFunction(funcName: String, args: Object*): Future[AnyRef] = {
     val f = Future {
                      log.info(s"$invocable, invoking: $funcName, args: $args")
                      invocable.invokeFunction(funcName, args: _*)
                    }
     f onComplete {
-      case Success(x) => log.info(s"invoke function: $funcName succeed, args: $args, result: $x")
+      case Success(x) => log.info(s"invoke function: $funcName succeed, args: $args, result: ${Conversion.nashornToString(x)}")
       case Failure(ex) => log.error(s"invoke function: $funcName failed, args: $args, ex.message: ${ex.getMessage}")
     }
     f
   }
 
-  def declareAndInvokeJSFunc(funcName: String, function: String, args: Object*): Future[AnyRef] = {
-    val f = evalJS(function) flatMap {x => invokeJSFunc(funcName, args: _*)}
+  def declareAndInvokeFunction(funcName: String, function: String, args: Object*): Future[AnyRef] = {
+    val f = eval(function) flatMap {x => invokeFunction(funcName, args: _*)}
     f onComplete {
-      case Success(x) =>  log.info(s"declare and invoke function: $funcName succeed, args: $args, result: $x")
+      case Success(x) =>  log.info(s"declare and invoke function: $funcName succeed, args: $args, result: ${Conversion.nashornToString(x)}")
       case Failure(ex) => log.error(s"declare and invoke function: $funcName failed, args: $args, ex.message: ${ex.getMessage}")
     }
     f
   }
 
-  // sync
-  def evalJSSync(script: String): Future[AnyRef] = {
+  // 串行执行js，不过同时会有并行接口执行
+  def evalExclusive(script: String): Future[AnyRef] = {
     val f = Future {
       log.info(s"$engine, evaluating: [$script]")
       engine.synchronized {
@@ -78,13 +79,13 @@ object JSContext {
       }
     }
     f onComplete {
-      case Success(x) => log.info(s"eval: [$script] succeed, result: ${Conversions.nashornToString(Some(x))}")
+      case Success(x) => log.info(s"eval: [$script] succeed, result: ${Conversion.nashornToString(x)}")
       case Failure(ex) => log.error(s"eval: [$script] failed, ex.message: ${ex.getMessage}")
     }
     f
   }
 
-  def invokeJSFuncSync(funcName: String, args: Object*): Future[AnyRef] = {
+  def invokeFunctionExclusive(funcName: String, args: Object*): Future[AnyRef] = {
     val f = Future {
       log.info(s"$invocable, invoking: $funcName, args: $args")
       engine.synchronized {
@@ -92,30 +93,32 @@ object JSContext {
       }
     }
     f onComplete {
-      case Success(x) => log.info(s"invoke function: $funcName succeed, args: $args, result: ${Conversions.nashornToString(Some(x))}")
+      case Success(x) => log.info(s"invoke function: $funcName succeed, args: $args, result: ${Conversion.nashornToString(x)}")
       case Failure(ex) => log.error(s"invoke function: $funcName failed, args: $args, ex.message: ${ex.getMessage}")
     }
     f
   }
 
-  def declareAndInvokeJSFuncSync(funcName: String, function: String, args: Object*): Future[AnyRef] = {
-    val f = evalJSSync(function) flatMap {x => invokeJSFuncSync(funcName, args: _*)}
+  def declareAndInvokeFunctionExclusive(funcName: String, function: String, args: Object*): Future[AnyRef] = {
+    val f = evalExclusive(function) flatMap {x => invokeFunctionExclusive(funcName, args: _*)}
     f onComplete {
-      case Success(x) =>  log.info(s"declare and invoke function: $funcName succeed, args: $args, result: ${Conversions.nashornToString(Some(x))}")
+      case Success(x) =>  log.info(s"declare and invoke function: $funcName succeed, args: $args, result: ${Conversion.nashornToString(x)}")
       case Failure(ex) => log.error(s"declare and invoke function: $funcName failed, args: $args, ex.message: ${ex.getMessage}")
     }
     f
   }
 
-  // blocking
-  def invokeJSFuncBlocking(funcName: String, args: Object*): Option[AnyRef] = {
+  // 阻塞等待结果(不做串行)
+  def invokeFunctionBlocking(funcName: String, args: Object*): Option[AnyRef] = {
     log.info(s"$invocable, blocking invoke: $funcName, args: $args")
     try {
-      val x = Some(invocable.invokeFunction(funcName, args: _*))
-      log.info(s"$invocable, blocking invoke succeed: $funcName, result: $x")
-      x
+      val x = invocable.invokeFunction(funcName, args: _*)
+      log.info(s"$invocable, blocking invoke succeed: $funcName, result: ${Conversion.nashornToString(x)}")
+      Some(x)
     } catch {
-      case ex: ScriptException => log.error(s"${ex.getMessage}, $funcName, $args"); None
+      case ex: ScriptException =>
+        log.error(s"${ex.getMessage}, $funcName, $args")
+        None
     }
   }
 }

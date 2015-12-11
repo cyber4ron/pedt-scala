@@ -5,20 +5,21 @@ import scala.concurrent.Future
 import org.slf4j.LoggerFactory
 import spray.json._
 
-import n4c.pedt.util.{Conversions, Utility}
+import n4c.pedt.util.{Conversion, Utility}
 
 object PEDT4JS {
   private val log = LoggerFactory.getLogger(PEDT.getClass)
+  import concurrent.ExecutionContext.Implicits.global
 
   def queryScope(scope: String): Array[String] = PEDT.queryScope(scope).map(_.getResources.toArray).getOrElse(Array.empty[String])
 
   def fetchTask(taskId: String): String = PEDT.fetchTask(taskId).map(x => PrettyPrinter(x.taskDef)).getOrElse("undefined")
 
   def run(task: String, args: String): Future[String] = PEDT.run(task, args.parseJson.asJsObject.fields.values.toSeq: _*)
-                                                        .map(x => Conversions.nashornToString(Some(x)))
+                                                        .map(x => Conversion.nashornToString(x))
 
   def runTask(taskId: String, args: String): Future[String] = PEDT.runTask(taskId, args.parseJson.asJsObject.fields)
-                                                              .map(x => Conversions.nashornToString(Some(x)))
+                                                              .map(x => Conversion.nashornToString(x))
 
   def executeTask = runTask _
 
@@ -29,8 +30,7 @@ object PEDT4JS {
 
   def reduce(scope: String, taskId: String, args: String, reduceTask: String): Future[String] =
     PEDT.reduce(scope, taskId, args.parseJson.asJsObject.fields, reduceTask)
-    .map(x => Conversions.nashornToString(Some(x)))
-
+    .map(x => Conversion.nashornToString(x))
 
   def daemon(scope: String, taskId: String, daemonTask: String, daemonArgs: String): Future[Array[String]] = {
     val fs = PEDT.daemon(scope, taskId, daemonTask, daemonArgs.parseJson.asJsObject.fields.values.toSeq: _*)
@@ -41,6 +41,10 @@ object PEDT4JS {
 
   def waitWithin[T](future: Future[T], durationMs: Long): Any = {
     import Utility.TimeBoundedFuture; import scala.concurrent.duration._
-    future waitWithin durationMs.millis
+    try {
+      future waitWithin durationMs.millis
+    } catch {
+      case ex: Throwable => log.warn(s"wait future failed, ex: ${ex.getMessage}")
+    }
   }
 }

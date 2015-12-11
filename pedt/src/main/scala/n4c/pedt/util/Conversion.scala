@@ -6,28 +6,28 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror
 import org.slf4j.LoggerFactory
 import spray.json._
 
-object Conversions {
-  private val log = LoggerFactory.getLogger(Conversions.getClass)
+object Conversion {
+  private val log = LoggerFactory.getLogger(Conversion.getClass)
   /**
    * 一般marshalling用到
    */
-  private[n4c] implicit def nashornToString(ref: Option[AnyRef]): String = ref.flatMap {
+  private[n4c] implicit def nashornToString(ref: AnyRef): String = ref match {
     case x: ScriptObjectMirror => x.asInstanceOf[ScriptObjectMirror].getClassName match {
-        case "Array" => invokeJSFuncBlocking("jsonToString", x).map(_.toString)
-        case "Object" => invokeJSFuncBlocking("jsonToString", x).map(_.toString)
-        case "Function" => Some("function type is unsupported.")
-        case _ => Some("unsupported ScriptObjectMirror type.")
+        case "Array" => invokeFunctionBlocking("jsonToString", x).map(_.toString).get
+        case "Object" => invokeFunctionBlocking("jsonToString", x).map(_.toString).get
+        case "Function" => """{"warn": "function type result is unsupported."}"""
+        case _ => """{"warn": "unsupported ScriptObjectMirror type."}"""
       }
-    case x: AnyRef => Some(x.toString) // should be plain type, e.g. String/Integer/...
-    case _ => Some("value of ref is null.") // null
-  } getOrElse "shouldn't be here."
+    case x: AnyRef => x.toString // should be plain type, e.g. String/Integer/...
+    case _ => """{"warn": "result is null"}""" // null
+  }
 
   private[n4c] implicit def nashornToJsValue(ref: AnyRef): Option[JsValue] = ref match {
     case x: ScriptObjectMirror =>
       import spray.json._
       x.asInstanceOf[ScriptObjectMirror].getClassName match {
-        case "Array"    => invokeJSFuncBlocking("jsonToString", x).map(_.toString.parseJson)
-        case "Object"   => invokeJSFuncBlocking("jsonToString", x).map(_.toString.parseJson)
+        case "Array"    => invokeFunctionBlocking("jsonToString", x).map(_.toString.parseJson)
+        case "Object"   => invokeFunctionBlocking("jsonToString", x).map(_.toString.parseJson)
         case "Function" => None
         case _          => None
       }

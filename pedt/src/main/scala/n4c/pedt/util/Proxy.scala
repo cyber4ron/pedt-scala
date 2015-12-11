@@ -34,9 +34,10 @@ abstract class Proxy[Proxied, Cached](getUrl: => String) {
 
 object ScopeProxy extends Proxy[Scope, Scope]({
   val config = ConfigFactory.load()
-  envOrElse("resource.scope", config.getString("resource.scope"))
+  envOrElse("n4c.service.resource", config.getString("n4c.service.resource"))
 }) {
   private val log = LoggerFactory.getLogger(ScopeProxy.getClass)
+
   override def apply(a: Scope): Option[Scope] = Some(a)
 
   override def retrieve(scope: String): Option[Scope] = {
@@ -55,18 +56,14 @@ object ScopeProxy extends Proxy[Scope, Scope]({
   }
 
   def invalidate(scope: String) {
-    retrieve(scope) map { scopeObj =>
-      log.info(s"refreshing scope proxy cache, scope: $scope, resources: ${scopeObj.getResources.mkString(", ")}")
-      put(scope, scopeObj)
-    } getOrElse {
-      log.error(s"retrieve scope failed, scope: $scope")
-    }
+    log.info(s"invalidating scope:[$scope]...")
+    cache = cache - scope
   }
 }
 
 object TaskProxy extends Proxy[Task, JsValue]({
   val config = ConfigFactory.load()
-  envOrElse("resource.task", config.getString("resource.task"))
+  envOrElse("n4c.service.task", config.getString("n4c.service.task"))
 }) {
   private val log = LoggerFactory.getLogger(TaskProxy.getClass)
   override def apply(taskDef: JsValue): Option[Task] = {

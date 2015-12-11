@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 import spray.json._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent._
 import scala.util.{Failure, Success}
 
 object Utility {
@@ -43,6 +43,9 @@ object Utility {
       try {
         Some(Await.result(p.future, time + 1.second)) //
       } catch {
+        case ex: TimeoutException =>
+          log.error("await result timeout, ex: " + ex.getMessage)
+          None
         case ex: Throwable =>
           log.error("await result failed, ex: " + ex.getMessage)
           None
