@@ -20,10 +20,10 @@ class HttpClient(config: Config) {
 
   import com.wandoujia.n4c.pedt.context.HttpContext.system
 
-  implicit val timeout: Timeout = Timeout(15.seconds) // implicit execution context
 
   val host = config.getString("web.host")
   val port = config.getInt("web.port")
+  implicit val timeout: Timeout = config.getInt("http.request.timeoutMs")
 
   def request(uri: String,
               method: HttpMethod = HttpMethods.GET,

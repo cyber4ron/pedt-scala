@@ -133,21 +133,8 @@ object JSContext {
   }
 
   //  val f = Future {
-  //                   engine.eval("function stringToJson(jsonStr) { return JSON.parse(jsonStr); }") // java.lang.NoClassDefFoundError: Could not initialize class com.wandoujia.n4c.pedt.context.JSContext$
-  //                 }
-  //  f onComplete {
-  //    case Success(x)  => log.info(s"xxxxxxxxxxxx: $x")
-  //    case Failure(ex) => log.error(s"yyyyyyyyyyyyyx: ${ex.getMessage}")
+  //    engine.eval("function stringToJson(jsonStr) { return JSON.parse(jsonStr); }") // java.lang.NoClassDefFoundError: Could not initialize class com.wandoujia.n4c.pedt.context.JSContext$
   //  }
   //  println(">>>> waiting...")
   //  Await.result(f, 1.second)
-  //  val f2 = Future {
-  //                    engine.eval("function jsonToString(obj) { return JSON.stringify(obj); }")
-  //                  }
-  //  println(">>>> waiting...")
-  //  f2 onComplete {
-  //    case Success(x)  => log.info(s"xxxxxxxxxxxx: $x")
-  //    case Failure(ex) => log.error(s"yyyyyyyyyyyyyx: ${ex.getMessage}")
-  //  }
-  //  f2 waitWithin 5.second
 }

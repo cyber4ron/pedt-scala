@@ -11,7 +11,7 @@ import pedt.util.Utility
 import pedt.context.JSContext._
 
 object Task {
-  private val log = LoggerFactory.getLogger(Task.getClass) // log都move到object
+  private val log = LoggerFactory.getLogger(Task.getClass)
   def apply(taskDef: JsObject) = new Task(taskDef)
   def apply(taskId: String, taskDef: JsObject) = new Task(Some(taskId.toLowerCase), taskDef)
 
