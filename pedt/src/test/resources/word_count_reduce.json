@@ -1,0 +1,7 @@
+{
+  "x": {
+    "run": "script:javascript:base64:ZnVuY3Rpb24gd29yZF9jb3VudF9yZWR1Y2UoZGljdHMpIHsKICAgIHZhciByZXN1bHQgPSB7fTsKICAgIGZvcih2YXIgaSA9IDA7IGkgPCBkaWN0cy5sZW5ndGg7IGkrKykgewogICAgICAgIGZvcih2YXIgd29yZCBpbiBkaWN0c1tpXSkgewogICAgICAgICAgICBpZih3b3JkIGluIHJlc3VsdCkgcmVzdWx0W3dvcmRdKys7CiAgICAgICAgICAgIGVsc2UgcmVzdWx0W3dvcmRdID0gMTsKICAgICAgICB9CiAgICB9CiAgICByZXR1cm4gcmVzdWx0Owp9Cg=="
+  }
+}
+
+

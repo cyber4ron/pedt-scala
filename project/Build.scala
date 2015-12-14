@@ -27,7 +27,10 @@ object Dependencies {
 
   val play = Seq("com.typesafe.play" %% "play" % "2.4.4")
 
-  val basic = log ++ spray ++ sprayJson ++ play
+  val test = Seq("org.scalatest" %% "scalatest" % "2.2.4" % Test,
+                 "org.scalamock" %% "scalamock-scalatest-support" % "3.2.1" % Test)
+
+  val basic = log ++ spray ++ sprayJson ++ play ++ test
 }
 
 object Formatting {
@@ -74,17 +77,4 @@ object Build extends sbt.Build {
                   settings(Formatting.settings: _*).
                   settings(libraryDependencies ++= Dependencies.basic).
                   settings(assemblySettings ++ extraSettings: _*)
-
-  lazy val test = Project("test", file("test")).
-                  dependsOn(pedt).
-                  settings(basicSettings: _*).
-                  settings(libraryDependencies ++= Dependencies.basic ++ Dependencies.scalaReflect).
-                  settings(Formatting.settings: _*)
-
-
-  lazy val sideTest = Project("side-test", file("side-test")).
-                  dependsOn(pedt).
-                  settings(basicSettings: _*).
-                  settings(libraryDependencies ++= Dependencies.basic ++ Dependencies.scalaReflect).
-                  settings(Formatting.settings: _*)
 }

@@ -1,0 +1,6 @@
+{
+  "x": {
+    "run": "script:javascript:base64:ZnVuY3Rpb24gd29yZF9jb3VudF9tYXAodGV4dCkgewogICAgdmFyIHdvcmRzID0gdGV4dC5zcGxpdCgvXHMrLyk7CiAgICB2YXIgZGljdCA9IHt9OwogICAgZm9yICh2YXIgaSA9IDA7IGkgPCB3b3Jkcy5sZW5ndGg7IGkrKykgewogICAgICAgIGlmKHdvcmRzW2ldIGluIGRpY3QpIGRpY3Rbd29yZHNbaV1dKys7CiAgICAgICAgZWxzZSBkaWN0W3dvcmRzW2ldXSA9IDE7CiAgICB9CiAgICByZXR1cm4gZGljdDsKfQo="
+  }
+}
+

@@ -6,17 +6,15 @@
 /target
 */target
 */*/target
-/n4c.test
 
-/pedt/src/main/scala/n4c/test/
-/pedt/src/test/
-/side-test/
 
 /pedt/project
-/test/project
 
 /*/src/*/java
+/*/src/*/scala-2.11
 
 /src
 
-/build.sbt
+/side-test/
+
+build.sbt
