@@ -9,6 +9,9 @@ import spray.can.Http
 
 import scala.concurrent.duration._
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 class ServiceActor extends Actor with ServerRoute {
   implicit val system = context.system
   def actorRefFactory = context

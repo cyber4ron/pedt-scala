@@ -16,6 +16,9 @@ import scala.concurrent.duration._
 import scala.util.Properties._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object HttpContext {
   private val log = LoggerFactory.getLogger(HttpContext.getClass)
   implicit val system: ActorSystem = ActorSystem("pedt-spray-http")

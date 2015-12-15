@@ -12,6 +12,9 @@ import pedt.core.PEDT
 import pedt.util.ScopeProxy
 import pedt.util.Marshalling._
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 trait ServerRoute extends HttpService {
   private val log = LoggerFactory.getLogger(classOf[ServerRoute])
 

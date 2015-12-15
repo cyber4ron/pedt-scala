@@ -10,6 +10,9 @@ import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{ Failure, Success }
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object JSContext {
   private val log = LoggerFactory.getLogger(JSContext.getClass)
   import concurrent.ExecutionContext.Implicits.global

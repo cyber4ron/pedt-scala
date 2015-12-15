@@ -17,6 +17,9 @@ import pedt.util.{ ScopeProxy, TaskProxy }
 import pedt.util.Utility.{ TimeBoundedFuture, toUrlQueryFormat }
 import pedt.util.Conversion._
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object PEDT {
   type RemoteResult = JsValue // http json result type
   type LocalResult = AnyRef // nashorn methods result type

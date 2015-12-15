@@ -10,6 +10,9 @@ import com.wandoujia.n4c.pedt
 import pedt.util.Utility
 import pedt.context.JSContext._
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object Task {
   private val log = LoggerFactory.getLogger(Task.getClass)
   def apply(taskDef: JsObject) = new Task(taskDef)
@@ -114,5 +117,5 @@ class Task(val taskId: Option[String],
     }
   }
 
-  def toCompatibleJsObj = invokeFunction("stringToJson", PrettyPrinter(taskDef)) // todo: remove hardcode
+  def toCompatibleJsObj = invokeFunction("stringToJson", PrettyPrinter(taskDef))
 }

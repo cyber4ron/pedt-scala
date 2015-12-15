@@ -11,7 +11,9 @@ import com.wandoujia.n4c.pedt.context.HttpContext._
 import com.wandoujia.n4c.pedt.core.{ Scope, Task }
 
 /**
- * should be thread safe
+ * Proxy should be thread safe.
+ *
+ * @author fenglei@wandoujia.com, 2015-12
  */
 abstract class Proxy[Proxied, Cached](getUrl: => String) {
   val url = getUrl

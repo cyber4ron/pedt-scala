@@ -7,6 +7,9 @@ import spray.json._
 
 import com.wandoujia.n4c.pedt.util.Utility
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object PEDT4JS {
   private val log = LoggerFactory.getLogger(PEDT4JS.getClass)
   import concurrent.ExecutionContext.Implicits.global

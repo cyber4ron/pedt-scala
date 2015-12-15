@@ -11,6 +11,9 @@ import pedt.util.{ Conversion, ScopeProxy }
 import Method.Executable
 import Scope.Resources
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object Scope {
   type Resources = Seq[String]
 

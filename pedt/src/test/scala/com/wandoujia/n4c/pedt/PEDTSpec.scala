@@ -4,10 +4,8 @@ import java.security.MessageDigest
 import java.util.Base64
 
 import com.typesafe.config.ConfigFactory
-import com.wandoujia.n4c.pedt.context.JSContext
 import com.wandoujia.n4c.pedt.core.PEDT
 import com.wandoujia.n4c.pedt.http.HttpServer
-import com.wandoujia.n4c.pedt.test.MockN4CService
 import com.wandoujia.n4c.pedt.util.Conversion
 import com.wandoujia.n4c.pedt.util.Utility._
 import org.scalatest.{BeforeAndAfterAll, WordSpec, run}
@@ -17,6 +15,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object PEDTSpec extends App {
   run(new PEDTSpec())
 }

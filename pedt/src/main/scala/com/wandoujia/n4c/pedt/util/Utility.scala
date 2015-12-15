@@ -10,6 +10,10 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ *
+ */
 object Utility {
   private val log = LoggerFactory.getLogger(Utility.getClass)
   import concurrent.ExecutionContext.Implicits.global

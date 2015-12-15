@@ -10,6 +10,9 @@ import com.wandoujia.n4c.pedt
 import pedt.context.JSContext
 import pedt.util.TaskProxy
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 trait JSExecutable {
   def execute(args: Object*): Future[AnyRef]
 }

@@ -7,6 +7,9 @@ import spray.json._
 
 import com.wandoujia.n4c.pedt.context.JSContext._
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object Conversion {
   private val log = LoggerFactory.getLogger(Conversion.getClass)
 

@@ -15,6 +15,9 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.io.Source
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object MockN4CService {
   private val log = LoggerFactory.getLogger(MockN4CService.getClass)
 
@@ -33,7 +36,6 @@ object MockN4CService {
     def +(kv: (K, V)) = {
       map.addBinding(kv._1, kv._2)
       inverseMap.addBinding(kv._2, kv._1)
-      this
     }
 
     def -(key: K) = {
@@ -44,7 +46,6 @@ object MockN4CService {
           inverseMap.removeBinding(value, key)
         }
       }
-      this
     }
   }
 

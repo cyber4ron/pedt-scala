@@ -15,6 +15,9 @@ import scala.util.{ Failure, Success }
 
 import concurrent.ExecutionContext.Implicits.global
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 class HttpClient(config: Config) {
   private val log = LoggerFactory.getLogger(classOf[HttpClient])
 

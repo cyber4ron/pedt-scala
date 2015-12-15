@@ -10,6 +10,9 @@ import spray.httpx.marshalling._
 import spray.httpx.unmarshalling._
 import spray.json._
 
+/**
+ * @author fenglei@wandoujia.com, 2015-12
+ */
 object Marshalling {
   private val log = LoggerFactory.getLogger(Marshalling.getClass)
 
