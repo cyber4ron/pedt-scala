@@ -23,7 +23,6 @@ class HttpClient(config: Config) {
 
   import com.wandoujia.n4c.pedt.context.HttpContext.system
 
-
   val host = config.getString("web.host")
   val port = config.getInt("web.port")
   implicit val timeout: Timeout = config.getInt("http.request.timeoutMs")

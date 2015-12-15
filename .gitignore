@@ -7,14 +7,11 @@
 */target
 */*/target
 
+/log
 
 /pedt/project
-
-/*/src/*/java
-/*/src/*/scala-2.11
-
-/src
-
 /side-test/
 
-build.sbt
+/src
+/*/src/*/java
+/*/src/*/scala-2.11

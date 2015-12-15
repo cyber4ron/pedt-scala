@@ -8,7 +8,8 @@ import com.wandoujia.n4c.pedt.core.PEDT
 import com.wandoujia.n4c.pedt.http.HttpServer
 import com.wandoujia.n4c.pedt.util.Conversion
 import com.wandoujia.n4c.pedt.util.Utility._
-import org.scalatest.{BeforeAndAfterAll, WordSpec, run}
+import org.scalatest.{ BeforeAndAfterAll, WordSpec, run }
+import org.slf4j.LoggerFactory
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,15 +20,20 @@ import scala.concurrent.duration._
  * @author fenglei@wandoujia.com, 2015-12
  */
 object PEDTSpec extends App {
-  run(new PEDTSpec())
+  run(new PEDTSpec()) // for IDE test only
 }
 
 class PEDTSpec extends WordSpec with BeforeAndAfterAll {
+  private val log = LoggerFactory.getLogger(classOf[PEDTSpec])
 
   var n4cService: MockN4CService.HttpServer = _
   var pedtWorker1: HttpServer = _
   var pedtWorker2: HttpServer = _
   var pedtWorker3: HttpServer = _
+
+  log.info(Console.YELLOW + "JS_HELPER_SCRIPT: " + sys.env("JS_HELPER_SCRIPT") + Console.RESET)
+  log.info(Console.YELLOW + "JS_PEDT_SCRIPT: " + sys.env("JS_PEDT_SCRIPT") + Console.RESET)
+  log.info(Console.YELLOW + "WORKING DIR: " + new java.io.File(".").getCanonicalPath + Console.RESET)
 
   override def beforeAll() {
     Future {
@@ -131,15 +137,15 @@ class PEDTSpec extends WordSpec with BeforeAndAfterAll {
 
     "pass word count test" in {
       val mapped = PEDT.mapEach("n4c:/a/b/c/map:*", "893d7569b4c01d8c8b6d3e053ebafb66",
-                                Array(Map("1" -> JsString("a b c c")),
-                                      Map("1" -> JsString("a b c c")),
-                                      Map("1" -> JsString("c c")),
-                                      Map("1" -> JsString("c c")),
-                                      Map("1" -> JsString("a c"))))
+        Array(Map("1" -> JsString("a b c c")),
+          Map("1" -> JsString("a b c c")),
+          Map("1" -> JsString("c c")),
+          Map("1" -> JsString("c c")),
+          Map("1" -> JsString("a c"))))
 
       val mappedJsValue = mapped.map(x => JsArray(x.map(y => Conversion.nashornToString(y).parseJson): _*))
       val v = mappedJsValue.flatMap { values =>
-        PEDT.run(s"script:javascript:base64:${Base64.getEncoder.encodeToString(io.Source.fromFile("pedt/src/test/resources/word_count_reduce.js").mkString.getBytes)}", values)
+        PEDT.run(s"script:javascript:base64:${Base64.getEncoder.encodeToString(io.Source.fromFile("src/test/resources/word_count_reduce.js").mkString.getBytes)}", values)
       } waitWithin 1.second
 
       assert(Conversion.nashornToString(v.get) == """{"a":3,"b":2,"c":9}""", "word count failed.")
@@ -149,9 +155,9 @@ class PEDTSpec extends WordSpec with BeforeAndAfterAll {
   "pedt.reduce" should {
     "pass reduce test" in {
       val f = PEDT.reduce("n4c:/a/b/c/map:*",
-                          "893d7569b4c01d8c8b6d3e053ebafb66",
-                          Map("1" -> JsString("a b c c")),
-                          "script:javascript:base64:" + Base64.getEncoder.encodeToString(io.Source.fromFile("pedt/src/test/resources/word_count_reduce.js").mkString.getBytes))
+        "893d7569b4c01d8c8b6d3e053ebafb66",
+        Map("1" -> JsString("a b c c")),
+        "script:javascript:base64:" + Base64.getEncoder.encodeToString(io.Source.fromFile("src/test/resources/word_count_reduce.js").mkString.getBytes))
 
       val v = f waitWithin 1.second
       assert(Conversion.nashornToString(v.get) == """{"a":3,"b":3,"c":6}""", "reduce failed.")
@@ -159,13 +165,13 @@ class PEDTSpec extends WordSpec with BeforeAndAfterAll {
 
     "complete reduceEach test" in {
       val f = PEDT.reduceEach("n4c:/a/b/c/map:*",
-                              "893d7569b4c01d8c8b6d3e053ebafb66",
-                              Array(Map("1" -> JsString("a b c c")),
-                                    Map("1" -> JsString("a b c c")),
-                                    Map("1" -> JsString("c c")),
-                                    Map("1" -> JsString("c c")),
-                                    Map("1" -> JsString("a c"))),
-                              "script:javascript:base64:" + Base64.getEncoder.encodeToString(io.Source.fromFile("pedt/src/test/resources/word_count_reduce.js").mkString.getBytes))
+        "893d7569b4c01d8c8b6d3e053ebafb66",
+        Array(Map("1" -> JsString("a b c c")),
+          Map("1" -> JsString("a b c c")),
+          Map("1" -> JsString("c c")),
+          Map("1" -> JsString("c c")),
+          Map("1" -> JsString("a c"))),
+        "script:javascript:base64:" + Base64.getEncoder.encodeToString(io.Source.fromFile("src/test/resources/word_count_reduce.js").mkString.getBytes))
 
       val v = f waitWithin 1.second
       assert(Conversion.nashornToString(v.get) == """{"a":3,"b":2,"c":9}""", "reduceEach failed.")

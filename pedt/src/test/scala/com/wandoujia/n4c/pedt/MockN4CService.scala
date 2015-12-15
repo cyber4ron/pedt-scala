@@ -1,15 +1,15 @@
 package com.wandoujia.n4c.pedt
 
-import java.net.{URLDecoder, URLEncoder}
+import java.net.{ URLDecoder, URLEncoder }
 
-import akka.actor.{Actor, Props}
+import akka.actor.{ Actor, Props }
 import akka.io.IO
 import akka.util.Timeout
 import com.wandoujia.n4c.pedt.util.Marshalling._
 import org.slf4j.LoggerFactory
 import spray.can.Http
 import spray.json._
-import spray.routing.{HttpService, Route}
+import spray.routing.{ HttpService, Route }
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -57,13 +57,13 @@ object MockN4CService {
 
     val subscribes = new BiMultiMap[String, String]() // scope <-> url
 
-    var tasks = Map[String, String]("30d9f7c5c9eb1a52c41af0bd4e2d835b" -> Source.fromFile("pedt/src/test/resources/init_connection_count.json").mkString,
-      "2543693a4c27f3c97e2c2f9cca4000ea" -> Source.fromFile("pedt/src/test/resources/get_current_connection_count.json").mkString,
-      "3c4b2ad93a3b98279c95e33a18eb994b" -> Source.fromFile("pedt/src/test/resources/update_current_connection_count.json").mkString,
-      "893d7569b4c01d8c8b6d3e053ebafb66" -> Source.fromFile("pedt/src/test/resources/word_count_map.json").mkString,
-      "132ecd77dc5a8ecfd36ce6bb149d208f" -> Source.fromFile("pedt/src/test/resources/word_count_reduce.json").mkString,
-      "d71634053f6eeaa6b21eb2fe82506af4" -> Source.fromFile("pedt/src/test/resources/call_from_js.json").mkString,
-      "30bf98606c585eef4ba24537231df3fb" -> Source.fromFile("pedt/src/test/resources/test_task.json").mkString)
+    var tasks = Map[String, String]("30d9f7c5c9eb1a52c41af0bd4e2d835b" -> Source.fromFile("src/test/resources/init_connection_count.json").mkString,
+      "2543693a4c27f3c97e2c2f9cca4000ea" -> Source.fromFile("src/test/resources/get_current_connection_count.json").mkString,
+      "3c4b2ad93a3b98279c95e33a18eb994b" -> Source.fromFile("src/test/resources/update_current_connection_count.json").mkString,
+      "893d7569b4c01d8c8b6d3e053ebafb66" -> Source.fromFile("src/test/resources/word_count_map.json").mkString,
+      "132ecd77dc5a8ecfd36ce6bb149d208f" -> Source.fromFile("src/test/resources/word_count_reduce.json").mkString,
+      "d71634053f6eeaa6b21eb2fe82506af4" -> Source.fromFile("src/test/resources/call_from_js.json").mkString,
+      "30bf98606c585eef4ba24537231df3fb" -> Source.fromFile("src/test/resources/test_task.json").mkString)
 
     def route: Route = {
       path("ping") {
