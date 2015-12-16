@@ -22,7 +22,7 @@ $ sbt pedt/publish
 ## Use as standalone worker
 ```shell
 $ sbt pedt/assembly
-$ java -jar pedt-assembly-0.1.jar
+$ java -jar .../pedt-assembly-0.1.jar
 ```
 
 ## Use as library
