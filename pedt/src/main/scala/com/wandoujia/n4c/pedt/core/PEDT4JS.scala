@@ -40,8 +40,8 @@ object PEDT4JS {
 
   def waitWithin[T](future: Future[T], durationMs: Long): Any = {
     import Utility.TimeBoundedFuture
-
     import scala.concurrent.duration._
+
     try {
       future waitWithin durationMs.millis getOrElse "undefined"
     } catch {

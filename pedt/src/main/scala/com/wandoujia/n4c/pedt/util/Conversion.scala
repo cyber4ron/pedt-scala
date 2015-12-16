@@ -16,7 +16,7 @@ object Conversion {
   /**
    * marshalling用到
    */
-  private[n4c] def nashornToString(ref: AnyRef): String = ref match {
+  private[pedt] def nashornToString(ref: AnyRef): String = ref match {
     case x: ScriptObjectMirror => x.asInstanceOf[ScriptObjectMirror].getClassName match {
       case "Array"     => invokeFunctionBlocking("jsonToString", x).map(_.toString).get
       case "Object"    => invokeFunctionBlocking("jsonToString", x).map(_.toString).get
@@ -28,7 +28,7 @@ object Conversion {
     case _         => """{"warn": "result is null"}""" // null
   }
 
-  private[n4c] def nashornToJsValue(ref: AnyRef): Option[JsValue] = ref match {
+  private[pedt] def nashornToJsValue(ref: AnyRef): Option[JsValue] = ref match {
     case x: ScriptObjectMirror =>
       import spray.json._
       x.asInstanceOf[ScriptObjectMirror].getClassName match {
@@ -40,7 +40,7 @@ object Conversion {
     case x => Some(JsString(x.toString))
   }
 
-  private[n4c] def jsValueToScala(value: JsValue): AnyRef = {
+  private[pedt] def jsValueToScala(value: JsValue): AnyRef = {
     value match {
       case _: JsBoolean => new java.lang.Boolean(value.asInstanceOf[JsBoolean].value)
       case _: JsString  => value.asInstanceOf[JsString].value
@@ -55,7 +55,7 @@ object Conversion {
     }
   }
 
-  private[n4c] def jsValueToJava(value: JsValue): Object = {
+  private[pedt] def jsValueToJava(value: JsValue): Object = {
     import collection.JavaConversions._
     value match {
       case _: JsBoolean => new java.lang.Boolean(value.asInstanceOf[JsBoolean].value)

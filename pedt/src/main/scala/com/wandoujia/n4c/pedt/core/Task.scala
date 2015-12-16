@@ -36,15 +36,15 @@ class Task(val taskId: Option[String],
   import Task.{ log, defaultHandler }
 
   var name: String = _
-  var methods = Array.empty[Method]
+  var methods = List.empty[Method]
   var distributedMethod: Option[Script] = None
   var promisedMethod: Option[Script] = None
   var rejectedMethod: Option[Script] = None
 
   taskDef.fields foreach {
-    case ("distributed", value) => distributedMethod = Some(Script(value).get)
-    case ("promised", value)    => promisedMethod = Some(Script(value).get)
-    case ("rejected", value)    => rejectedMethod = Some(Script(value).get)
+    case ("distributed", value) => distributedMethod = Script(value)
+    case ("promised", value)    => promisedMethod = Script(value)
+    case ("rejected", value)    => rejectedMethod = Script(value)
     case kv @ (taskName, value) =>
       name = taskName
       methods :+= new Method(value.asJsObject)
@@ -53,11 +53,10 @@ class Task(val taskId: Option[String],
 
   distributed(taskDef)
 
-  import concurrent.ExecutionContext.Implicits.global
-
-  import scala.concurrent.duration._
-
   def this(taskDef: JsObject) = this(None, taskDef)
+
+  import concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration._
 
   /**
    * 多个method返回seq
@@ -65,7 +64,7 @@ class Task(val taskId: Option[String],
   def execute(args: Map[String, JsValue]): Future[AnyRef] = { // execute js (nashorn) 返回的都AnyRef. args用于mix
     log.info(s"in task.execute, args: $args")
     if (methods.length == 1) {
-      methods(0).execute(args) recoverWith {
+      methods.head.execute(args) recoverWith {
         case ex: Throwable => rejected(ex.getMessage)
       } flatMap { x =>
         val f = promised(x)
@@ -96,25 +95,21 @@ class Task(val taskId: Option[String],
   }
 
   def promised(taskResult: AnyRef): Future[AnyRef] = { // taskResult是nashorn的返回值，应该是js compatible的
-    try {
-      if (promisedMethod.isDefined) {
-        val f = promisedMethod.get.execute(taskResult.asInstanceOf[AnyRef])
-        f recoverWith {
-          case ex: Throwable => rejected(ex.getMessage)
-        } onComplete defaultHandler(s"promised method succeed.", s"promised method failed, ex.message: %s")
-        f
-      } else Future { taskResult }
-    }
+    if (promisedMethod.isDefined) {
+      val f = promisedMethod.get.execute(taskResult.asInstanceOf[AnyRef]) recoverWith {
+        case ex: Throwable => rejected(ex.getMessage)
+      }
+      f onComplete defaultHandler(s"promised method succeed.", s"promised method failed, ex.message: %s")
+      f
+    } else Future { taskResult }
   }
 
   def rejected(reason: Object): Future[AnyRef] = {
-    try {
-      if (rejectedMethod.isDefined) {
-        val f = rejectedMethod.get.execute(reason)
-        f onComplete defaultHandler(s"rejected method succeed.", s"rejected method failed, ex.message: %s")
-        f
-      } else Future { reason }
-    }
+    if (rejectedMethod.isDefined) {
+      val f = rejectedMethod.get.execute(reason)
+      f onComplete defaultHandler(s"rejected method succeed.", s"rejected method failed, ex.message: %s")
+      f
+    } else Future { reason }
   }
 
   def toCompatibleJsObj = invokeFunction("stringToJson", PrettyPrinter(taskDef))

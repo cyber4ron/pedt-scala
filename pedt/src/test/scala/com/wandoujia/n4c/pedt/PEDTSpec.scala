@@ -31,16 +31,17 @@ class PEDTSpec extends WordSpec with BeforeAndAfterAll {
   var pedtWorker2: HttpServer = _
   var pedtWorker3: HttpServer = _
 
-  log.info(Console.YELLOW + "JS_HELPER_SCRIPT: " + sys.env("JS_HELPER_SCRIPT") + Console.RESET)
-  log.info(Console.YELLOW + "JS_PEDT_SCRIPT: " + sys.env("JS_PEDT_SCRIPT") + Console.RESET)
-  log.info(Console.YELLOW + "WORKING DIR: " + new java.io.File(".").getCanonicalPath + Console.RESET)
-
   override def beforeAll() {
+    log.info(Console.YELLOW + "JS_HELPER_SCRIPT: " + sys.env("JS_HELPER_SCRIPT") + Console.RESET)
+    log.info(Console.YELLOW + "JS_PEDT_SCRIPT: " + sys.env("JS_PEDT_SCRIPT") + Console.RESET)
+    log.info(Console.YELLOW + "WORKING DIR: " + new java.io.File(".").getCanonicalPath + Console.RESET)
+
     Future {
       n4cService = new MockN4CService.HttpServer()
       n4cService.start()
     }
 
+    // workers严格的话应该启多个JVM，现在是在同一JVM，用同一个nashorn object
     Future {
       pedtWorker1 = new HttpServer(ConfigFactory.parseString("""web {
                                                                |  host = "127.0.0.1"
@@ -132,7 +133,7 @@ class PEDTSpec extends WordSpec with BeforeAndAfterAll {
       Thread.sleep(100)
       val v = PEDT.map("n4c:/a/b/c/sink:*", "2543693a4c27f3c97e2c2f9cca4000ea", Map.empty[String, JsValue]) waitWithin 1.seconds // get var
       val num = v.get.map(x => x.asInstanceOf[JsNumber].value.toInt).head
-      assert(num >= -1 && num <= 6, "connection count failed.") // 正常是5，但nashorn并行执行，有随机性。
+      assert(num >= -1 && num <= 6, "connection count failed.") // 正常是5，但nashorn并行执行，有随机性
     }
 
     "pass word count test" in {
@@ -148,7 +149,11 @@ class PEDTSpec extends WordSpec with BeforeAndAfterAll {
         PEDT.run(s"script:javascript:base64:${Base64.getEncoder.encodeToString(io.Source.fromFile("src/test/resources/word_count_reduce.js").mkString.getBytes)}", values)
       } waitWithin 1.second
 
+      // 只用了一个jvm(一个nashorn)，
+      // map的测试里js func在nashorn的declare和执行是并行的，有一点不确定性
+      // 下面的reduce测试也是一样
       assert(Conversion.nashornToString(v.get) == """{"a":3,"b":2,"c":9}""", "word count failed.")
+
     }
   }
 
@@ -182,7 +187,6 @@ class PEDTSpec extends WordSpec with BeforeAndAfterAll {
     "complete daemon test" in {
       val v = PEDT.daemon("n4c:/a/b/c/map:*", "30bf98606c585eef4ba24537231df3fb", s"""script:javascript:function xxx(x) {print("in daemon."); return x;}""", Map("1" -> JsNumber(9))) waitWithin 1.second
       assert(v.get.map(x => x.asInstanceOf[JsNumber].value.toInt) == Vector(9, 9, 9), "daemon failed.")
-      ""
     }
   }
 

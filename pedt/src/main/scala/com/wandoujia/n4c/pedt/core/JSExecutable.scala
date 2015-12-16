@@ -26,7 +26,7 @@ trait Content extends JSExecutable {
 object Data {
   private val dataPattern = "^data:(string:)?(?:utf8:)?([^:]+:){0,1}(?:utf8:)?".r
 
-  def parse: String PartialFunction Data = {
+  private def parse: String PartialFunction Data = {
     case exeValue if exeValue.startsWith("data:") =>
       val m = dataPattern.findAllMatchIn(exeValue).next()
       m.subgroups.filter(_ != null).toArray match {
@@ -55,7 +55,7 @@ class Data(override val subtype: String,
 object Script {
   private val scriptPattern = "^script:([^:]+:)(?:utf8:)?([^:]+:){0,1}(?:utf8:)?".r
 
-  def parse: String PartialFunction Script = {
+  private def parse: String PartialFunction Script = {
     case exeValue if exeValue.startsWith("script:") =>
       val m = scriptPattern.findAllMatchIn(exeValue).next()
       m.subgroups.filter(_ != null).toArray match {
@@ -95,10 +95,10 @@ class Script(override val subtype: String,
 object EmbeddedTask {
   private val taskPattern = "^taskId:([a-z0-9]{32})$".r
 
-  def parse: String PartialFunction Task = {
+  private def parse: String PartialFunction Task = {
     case exeValue if taskPattern.pattern.matcher(exeValue).matches =>
       val taskId = taskPattern.findFirstMatchIn(exeValue).get.subgroups.head
-      TaskProxy.get(taskId) match {
+      (TaskProxy.get(taskId): @unchecked) match {
         case Some(task) => task
       }
   }

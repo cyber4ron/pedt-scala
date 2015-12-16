@@ -17,7 +17,7 @@ import Scope.Resources
 object Scope {
   type Resources = Seq[String]
 
-  private[n4c] def apply(system: String, path: String, scopeFilter: String, res: Resources): Option[Scope] =
+  private[pedt] def apply(system: String, path: String, scopeFilter: String, res: Resources): Option[Scope] =
     Some(new Scope(system,
       if (path == "") None else Some(path),
       scopeFilter, res))
@@ -35,7 +35,7 @@ class Scope(val system: String,
 }
 
 object Arguments {
-  private[n4c] def apply(args: JsValue) = {
+  private[pedt] def apply(args: JsValue) = {
     new Arguments(args.asJsObject.fields)
   }
 
@@ -48,16 +48,16 @@ object Arguments {
   }
 }
 
-class Arguments(private[n4c] val scalaArgs: Map[String, JsValue]) {
+class Arguments(private[pedt] val scalaArgs: Map[String, JsValue]) {
   import scala.collection.JavaConversions._
-  val javaArgs: java.util.Map[String, Object] = scalaArgs.map(kv => kv._1 -> Conversion.jsValueToJava(kv._2))
+  private val javaArgs: java.util.Map[String, Object] = scalaArgs.map(kv => kv._1 -> Conversion.jsValueToJava(kv._2))
   def getArg: java.util.Map[String, Object] = javaArgs
   def getArgArray: Array[Object] = javaArgs.values().toArray
 }
 
 object Method {
   private val log = LoggerFactory.getLogger(Method.getClass)
-  type Executable = { def execute(x: Object*): Future[AnyRef] } // JSExecutable or EmbeddedTask, call by reflection
+  type Executable = { def execute(x: Object*): Future[AnyRef] } // JSExecutable or EmbeddedTask. call by reflection...
   def apply(methodDef: JsObject) = new Method(methodDef)
 }
 
@@ -70,10 +70,10 @@ class Method(methodDef: JsObject) {
   var scope: Option[Scope] = None
   var arguments: Option[Arguments] = None
 
-  methodDef.fields.foreach {
-    case ("scope", sc: JsValue)       => scope = ScopeProxy.get(sc.asInstanceOf[JsString].value) // type
+  methodDef.fields foreach {
+    case ("scope", sc: JsValue)       => if (sc.isInstanceOf[JsString]) scope = ScopeProxy.get(sc.asInstanceOf[JsString].value)
     case ("arguments", args: JsValue) => arguments = Some(Arguments(args.asJsObject))
-    case (dType @ ("run" | "map"), value: JsValue) => // value其实是个string
+    case (dType @ ("run" | "map"), value: JsValue) =>
       distrType = dType
       val x = Data(value) orElse Script(value) orElse EmbeddedTask(value) orElse None
       if (x.isEmpty) throw new IllegalArgumentException
@@ -97,14 +97,14 @@ class Method(methodDef: JsObject) {
         case _ => throw new IllegalStateException
       }
       case "map" =>
-        if (scope.isEmpty) throw new IllegalStateException("")
+        if (scope.isEmpty) throw new IllegalStateException("empty scope")
         executable match {
           case task: Task =>
-            if (scope.isEmpty) throw new IllegalStateException("")
+            if (scope.isEmpty) throw new IllegalStateException("empty scope")
             PEDT.map(scope.get, task.taskId.get, arguments.get.scalaArgs)
-          case _ => throw new IllegalStateException("")
+          case _ => throw new IllegalStateException("try to map non-task")
         }
-      case _ => throw new IllegalStateException
+      case x => throw new IllegalStateException(s"undefined distribution type: $x")
     }
   }
 }

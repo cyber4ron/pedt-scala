@@ -11,8 +11,6 @@ object Dependencies {
                 "org.slf4j" % "log4j-over-slf4j" % slf4jVersion,
                 "ch.qos.logback" % "logback-classic" % "1.1.2")
 
-  val scalaReflect = Seq("org.scala-lang" % "scala-reflect" % scalaVersion)
-
   val spray = Seq("io.spray"            %%  "spray-can"     % sprayVersion,
                   "io.spray"            %%  "spray-routing" % sprayVersion,
                   "io.spray"            %%  "spray-testkit" % sprayVersion  % "test",
@@ -28,6 +26,8 @@ object Dependencies {
                  "org.scalamock" %% "scalamock-scalatest-support" % "3.2.1" % Test)
 
   val basic = log ++ spray ++ sprayJson ++ play ++ test
+
+  val testJar = Seq("com.wandoujia.n4c" %% "pedt" % "0.1")
 }
 
 object Formatting {

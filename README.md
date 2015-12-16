@@ -8,6 +8,14 @@ implementation of PEDT
     $ export JS_PEDT_SCRIPT=src/main/javascript/pedt.js
     $ export JS_HELPER_SCRIPT=src/main/resources/js_helper.json
     $ sbt test
-## package
+# publish to private repository
+
+    $ sbt pedt/publish
+
+## start standalone worker
+
+    $
+## use as library
     
-    $ sbt assembly
+    
+    

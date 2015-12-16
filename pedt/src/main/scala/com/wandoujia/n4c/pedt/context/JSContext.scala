@@ -21,6 +21,8 @@ object JSContext {
   private val engine: ScriptEngine = manager.getEngineByName("nashorn")
   private val invocable = engine.asInstanceOf[Invocable]
 
+  private var declaredFuncs = Set.empty[Int]
+
   // js helper
   val jsHelperScript = sys.env.getOrElse("JS_HELPER_SCRIPT", "js_helper.json")
   try {
@@ -61,6 +63,20 @@ object JSContext {
     f
   }
 
+  def declare(function: String): Future[AnyRef] = {
+    if (declaredFuncs.contains(function.hashCode)) Future { "function declared" }
+    else {
+      val f = eval(function)
+      f onComplete {
+        case Success(x) =>
+          log.info(s"declare: [$function] succeed, result: ${Conversion.nashornToString(x)}")
+          declaredFuncs = declaredFuncs + function.hashCode
+        case Failure(ex) => log.error(s"declare: [$function] failed, ex.message: ${ex.getMessage}")
+      }
+      f
+    }
+  }
+
   def invokeFunction(funcName: String, args: Object*): Future[AnyRef] = {
     val f = Future {
       log.info(s"$invocable, invoking: $funcName, args: $args")
@@ -74,7 +90,7 @@ object JSContext {
   }
 
   def declareAndInvokeFunction(funcName: String, function: String, args: Object*): Future[AnyRef] = {
-    val f = eval(function) flatMap { x => invokeFunction(funcName, args: _*) }
+    val f = declare(function) flatMap { _ => invokeFunction(funcName, args: _*) }
     f onComplete {
       case Success(x)  => log.info(s"declare and invoke function: $funcName succeed, args: $args, result: ${Conversion.nashornToString(x)}")
       case Failure(ex) => log.error(s"declare and invoke function: $funcName failed, args: $args, ex.message: ${ex.getMessage}")
