@@ -31,5 +31,5 @@ $ java -jar pedt-assembly-0.1.jar
 libraryDependencies ++= "com.wandoujia.n4c" %% "pedt" % "0.1"
 ```
 
-## How it work    
+## How it works
 ![illustrate pedt-scala](https://github.com/cyber4ron/notes/blob/master/images/pedt-scala.png)
