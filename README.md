@@ -12,10 +12,17 @@ implementation of PEDT
 
     $ sbt pedt/publish
 
-## start standalone worker
-
-    $
+## use as standalone worker
+```shell
+sbt pedt/assembly
+java -jar pedt-assembly-0.1.jar
+```
 ## use as library
-    
-    
-    
+```scala
+// first, publish the library to repository, then add it as dependency
+libraryDependencies ++= "com.wandoujia.n4c" %% "pedt" % "0.1"
+```
+
+## How it work    
+![illustrate pedt-scala](https://github.com/cyber4ron/notes/blob/master/images/pedt-scala.png)
+

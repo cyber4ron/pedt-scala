@@ -28,9 +28,9 @@ lazy val publishSettings = Seq(publishTo := {
                                  (repo: MavenRepository) => false
                                })
 
-//assemblySettings
-//
-//lazy val extraSettings = Seq(assemblyOption in assembly ~= { _.copy(includeScala = false, includeDependency = false) })
+assemblySettings
+
+// lazy val extraSettings = Seq(assemblyOption in assembly ~= { _.copy(includeScala = false, includeDependency = false) })
 
 lazy val root = Project("root", file("."))
                 .aggregate(pedt)
@@ -39,5 +39,5 @@ lazy val pedt = Project("pedt", file("pedt"))
                 .settings(libraryDependencies ++= Dependencies.basic)
                 .settings(Formatting.settings: _*)
                 .settings(basicSettings: _*)
-                //.settings(assemblySettings ++ extraSettings: _*)
+                .settings(assemblySettings/* ++ extraSettings*/: _*)
                 .settings(publishSettings: _*)
