@@ -56,7 +56,7 @@ object Conversion {
   }
 
   private[pedt] def jsValueToJava(value: JsValue): Object = {
-    import collection.JavaConversions._
+    import collection.JavaConverters._
     value match {
       case _: JsBoolean => new java.lang.Boolean(value.asInstanceOf[JsBoolean].value)
       case _: JsString  => value.asInstanceOf[JsString].value
@@ -64,8 +64,8 @@ object Conversion {
         case num if num.isValidLong   => new java.lang.Long(num.toLongExact)
         case num if num.isExactDouble => new java.lang.Double(num.toDouble) // to n4c.test
       }
-      case _: JsArray  => seqAsJavaList(value.asInstanceOf[JsArray].elements.map(jsValueToJava))
-      case _: JsObject => mapAsJavaMap(value.asInstanceOf[JsObject].fields.map(kv => kv._1 -> jsValueToJava(kv._2)))
+      case _: JsArray  => value.asInstanceOf[JsArray].elements.map(jsValueToJava).asJava
+      case _: JsObject => value.asInstanceOf[JsObject].fields.map(kv => kv._1 -> jsValueToJava(kv._2)).asJava
 
       case _           => throw new IllegalArgumentException("unsupported JsValue Type.")
     }

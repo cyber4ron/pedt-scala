@@ -3,19 +3,16 @@ package com.wandoujia.n4c.pedt.core
 import java.net.URLEncoder
 
 import com.typesafe.config.ConfigFactory
+import com.wandoujia.n4c.pedt.context.HttpContext.{ host, httpClient, port, request }
+import com.wandoujia.n4c.pedt.util.Conversion._
+import com.wandoujia.n4c.pedt.util.Utility.{ TimeBoundedFuture, toUrlQueryFormat }
+import com.wandoujia.n4c.pedt.util.{ ScopeProxy, TaskProxy }
 import org.slf4j.LoggerFactory
 import spray.http.{ HttpEntity, HttpMethods, MediaTypes }
 import spray.json.{ CompactPrinter, JsValue }
 
-import scala.collection.JavaConversions
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
-import com.wandoujia.n4c.pedt
-import pedt.context.HttpContext.{ host, httpClient, port, request }
-import pedt.util.{ ScopeProxy, TaskProxy }
-import pedt.util.Utility.{ TimeBoundedFuture, toUrlQueryFormat }
-import pedt.util.Conversion._
 
 /**
  * @author fenglei@wandoujia.com, 2015-12
@@ -113,11 +110,11 @@ object PEDT {
   }
 
   def reduce(scope: String, taskId: String, args: Map[String, JsValue], reduceTask: String): Future[LocalResult] = {
-    import JavaConversions._
+    import collection.JavaConverters._
     val futureOfMapped = map(scope, taskId, args)
     Script(reduceTask) map { script =>
       futureOfMapped flatMap { seq =>
-        script.execute(seqAsJavaList(seq.map(jsValueToJava)))
+        script.execute(seq.map(jsValueToJava).asJava)
       }
     } getOrElse Future {
       throw new IllegalStateException(s"parse reduceTask failed, reduceTask: [$reduceTask]")
@@ -125,11 +122,11 @@ object PEDT {
   }
 
   def reduceEach(scope: String, taskId: String, argsSeq: Seq[Map[String, JsValue]], reduceTask: String): Future[LocalResult] = {
-    import JavaConversions._
+    import collection.JavaConverters._
     val futureOfMapped = mapEach(scope, taskId, argsSeq)
     Script(reduceTask) map { script =>
       futureOfMapped flatMap { seq =>
-        script.execute(seqAsJavaList(seq.map(jsValueToJava)))
+        script.execute(seq.map(jsValueToJava).asJava)
       }
     } getOrElse Future {
       throw new IllegalStateException(s"parse reduceTask failed, reduceTask: [$reduceTask]")

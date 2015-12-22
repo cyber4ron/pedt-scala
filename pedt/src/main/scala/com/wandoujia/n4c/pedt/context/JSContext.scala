@@ -50,7 +50,7 @@ object JSContext {
   def load() {}
 
   // 并行执行js
-  // nashorn支持并行，但避免shared变量。references: tbd
+  // nashorn支持并行，但避免shared变量，references: http://blogs.oracle.com/nashorn/entry/nashorn_multi_threading_and_mt
   def eval(script: String): Future[AnyRef] = {
     val f = Future {
       log.info(s"$engine, evaluating: [$script]")

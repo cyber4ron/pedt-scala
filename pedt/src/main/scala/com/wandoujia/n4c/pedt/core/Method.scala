@@ -49,8 +49,8 @@ object Arguments {
 }
 
 class Arguments(private[pedt] val scalaArgs: Map[String, JsValue]) {
-  import scala.collection.JavaConversions._
-  private val javaArgs: java.util.Map[String, Object] = scalaArgs.map(kv => kv._1 -> Conversion.jsValueToJava(kv._2))
+  import collection.JavaConverters._
+  private val javaArgs: java.util.Map[String, Object] = scalaArgs.map(kv => kv._1 -> Conversion.jsValueToJava(kv._2)).asJava
   def getArg: java.util.Map[String, Object] = javaArgs
   def getArgArray: Array[Object] = javaArgs.values().toArray
 }
